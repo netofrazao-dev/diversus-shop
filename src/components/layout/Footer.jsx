@@ -43,8 +43,21 @@ export default function Footer() {
           </div>
         </div>
       </div>
-      <div className="border-t border-white/10 py-4 text-center text-xs text-white/40">
-        © {new Date().getFullYear()} DIVERSUS SHOP. Todos os direitos reservados.
+      <div className="border-t border-white/10 py-4 flex flex-col items-center gap-1.5 text-center px-4">
+        <p className="text-xs text-white/40">
+          © {new Date().getFullYear()} DIVERSUS SHOP. Todos os direitos reservados.
+        </p>
+        <p className="text-xs text-white/50">
+          desenvolvido por neto e gabi
+        </p>
+        <a
+          href="https://netofrazao-dev.github.io/Neto-Dev/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs font-semibold text-secondary hover:underline"
+        >
+          faça um sistema/site assim para você clicando aqui
+        </a>
       </div>
     </footer>
   );

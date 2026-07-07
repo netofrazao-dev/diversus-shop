@@ -49,20 +49,20 @@ export default function RestockRequestModal({ product, isOpen, onClose }) {
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleClose}
-            className="fixed inset-0 bg-black/50 z-50"
+            className="absolute inset-0 bg-black/50"
           />
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className="fixed inset-x-4 top-1/2 -translate-y-1/2 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-md z-50 bg-white border-4 border-black rounded-3xl shadow-cartoon-xl p-6"
+            className="relative w-full max-w-md max-h-[85vh] overflow-y-auto bg-white border-4 border-black rounded-3xl shadow-cartoon-xl p-6"
           >
             <button
               onClick={handleClose}
@@ -117,7 +117,7 @@ export default function RestockRequestModal({ product, isOpen, onClose }) {
               </form>
             )}
           </motion.div>
-        </>
+        </div>
       )}
     </AnimatePresence>
   );

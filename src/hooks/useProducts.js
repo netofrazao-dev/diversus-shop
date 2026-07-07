@@ -16,9 +16,17 @@ export function useProducts(options = {}) {
   return useQuery({
     queryKey: ['products', options],
     queryFn: async () => {
+      // Quando filtramos por categoria, o join precisa ser "!inner" — sem isso,
+      // o Supabase só filtra o campo embutido "categories" no resultado, mas
+      // continua retornando TODOS os produtos (esse era o bug de categorias
+      // aparecendo misturadas).
+      const selectStr = categorySlug
+        ? '*, categories!inner(name, slug)'
+        : '*, categories(name, slug)';
+
       let query = supabase
         .from('products')
-        .select('*, categories(name, slug)')
+        .select(selectStr)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 

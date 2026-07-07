@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Trash2, Edit2, Upload, X } from 'lucide-react';
+import { Plus, Trash2, Edit2, Upload, X, Star } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
@@ -16,7 +16,6 @@ const emptyForm = {
   is_featured: false,
   is_new: false,
   is_sold_out: false,
-  image_url: '',
 };
 
 const formatPrice = (value) =>
@@ -26,8 +25,8 @@ export default function AdminProducts() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [form, setForm] = useState(emptyForm);
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState('');
+  // photos: [{ key, url (preview ou já publicada), file (File novo ou null se já existente) }]
+  const [photos, setPhotos] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -46,8 +45,7 @@ export default function AdminProducts() {
 
   const openNewForm = () => {
     setForm(emptyForm);
-    setImageFile(null);
-    setImagePreview('');
+    setPhotos([]);
     setShowForm(true);
   };
 
@@ -63,41 +61,68 @@ export default function AdminProducts() {
       is_featured: product.is_featured,
       is_new: product.is_new,
       is_sold_out: product.is_sold_out,
-      image_url: product.image_url || '',
     });
-    setImagePreview(product.image_url || '');
-    setImageFile(null);
+
+    // Monta a galeria a partir de "images" (se existir) ou do image_url antigo
+    const existingUrls = product.images?.length
+      ? product.images
+      : product.image_url
+      ? [product.image_url]
+      : [];
+
+    setPhotos(existingUrls.map((url, i) => ({ key: `existing-${i}-${url}`, url, file: null })));
     setShowForm(true);
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+  const handleAddPhotos = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const newPhotos = files.map((file) => ({
+      key: crypto.randomUUID(),
+      url: URL.createObjectURL(file),
+      file,
+    }));
+
+    setPhotos((prev) => [...prev, ...newPhotos]);
+    e.target.value = ''; // permite escolher o mesmo arquivo de novo se precisar
   };
 
-  const uploadImage = async () => {
-    if (!imageFile) return form.image_url || null;
+  const handleRemovePhoto = (key) => {
+    setPhotos((prev) => prev.filter((p) => p.key !== key));
+  };
 
-    const fileExt = imageFile.name.split('.').pop();
-    const fileName = `${crypto.randomUUID()}.${fileExt}`;
+  const handleMakeMain = (key) => {
+    setPhotos((prev) => {
+      const target = prev.find((p) => p.key === key);
+      if (!target) return prev;
+      return [target, ...prev.filter((p) => p.key !== key)];
+    });
+  };
 
-    const { error: uploadError } = await supabase.storage
-      .from('product-images')
-      .upload(fileName, imageFile);
-
-    if (uploadError) throw uploadError;
-
-    const { data } = supabase.storage.from('product-images').getPublicUrl(fileName);
-    return data.publicUrl;
+  // Faz upload de quem for novo e devolve a lista final de URLs, na ordem exibida
+  const resolvePhotoUrls = async () => {
+    const urls = [];
+    for (const photo of photos) {
+      if (photo.file) {
+        const fileExt = photo.file.name.split('.').pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const { error } = await supabase.storage.from('product-images').upload(fileName, photo.file);
+        if (error) throw error;
+        const { data } = supabase.storage.from('product-images').getPublicUrl(fileName);
+        urls.push(data.publicUrl);
+      } else {
+        urls.push(photo.url);
+      }
+    }
+    return urls;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
-      const imageUrl = await uploadImage();
+      const imageUrls = await resolvePhotoUrls();
 
       const payload = {
         name: form.name,
@@ -109,7 +134,8 @@ export default function AdminProducts() {
         is_featured: form.is_featured,
         is_new: form.is_new,
         is_sold_out: form.is_sold_out,
-        image_url: imageUrl,
+        image_url: imageUrls[0] || null,
+        images: imageUrls,
       };
 
       if (form.id) {
@@ -218,7 +244,7 @@ export default function AdminProducts() {
             />
           </div>
 
-          <div className="flex gap-6">
+          <div className="flex gap-6 flex-wrap">
             <label className="flex items-center gap-2 font-display font-semibold text-sm">
               <input
                 type="checkbox"
@@ -248,20 +274,59 @@ export default function AdminProducts() {
             </label>
           </div>
 
+          {/* Galeria de imagens */}
           <div className="flex flex-col gap-2">
-            <label className="font-display font-semibold text-sm">Imagem do produto</label>
-            <div className="flex items-center gap-4">
-              {imagePreview && (
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="w-20 h-20 rounded-xl border-3 border-black object-cover"
-                />
-              )}
-              <label className="flex items-center gap-2 bg-white border-3 border-black rounded-2xl px-4 py-3 shadow-cartoon-sm cursor-pointer font-display font-semibold text-sm">
+            <label className="font-display font-semibold text-sm">
+              Fotos do produto (a primeira é a foto principal)
+            </label>
+
+            <div className="flex flex-wrap gap-3">
+              {photos.map((photo, index) => (
+                <div
+                  key={photo.key}
+                  className="relative w-24 h-24 rounded-xl border-3 border-black overflow-hidden shrink-0"
+                >
+                  <img src={photo.url} alt="" className="w-full h-full object-cover" />
+
+                  {index === 0 && (
+                    <span className="absolute bottom-0 left-0 right-0 bg-primary text-white text-[10px] font-display font-bold text-center py-0.5">
+                      PRINCIPAL
+                    </span>
+                  )}
+
+                  <div className="absolute top-1 right-1 flex gap-1">
+                    {index !== 0 && (
+                      <button
+                        type="button"
+                        onClick={() => handleMakeMain(photo.key)}
+                        className="bg-white border-2 border-black rounded-full p-1 shadow-cartoon-sm"
+                        title="Tornar principal"
+                      >
+                        <Star size={11} />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePhoto(photo.key)}
+                      className="bg-white border-2 border-black rounded-full p-1 shadow-cartoon-sm text-red-600"
+                      title="Remover"
+                    >
+                      <X size={11} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              <label className="w-24 h-24 flex flex-col items-center justify-center gap-1 bg-white border-3 border-dashed border-black rounded-xl shadow-cartoon-sm cursor-pointer font-display font-semibold text-xs text-center px-2 shrink-0">
                 <Upload size={18} />
-                Escolher imagem
-                <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                Adicionar
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleAddPhotos}
+                  className="hidden"
+                />
               </label>
             </div>
           </div>
@@ -290,6 +355,11 @@ export default function AdminProducts() {
                 {product.is_sold_out && (
                   <span className="text-xs font-display font-bold border-2 border-black rounded-full px-2.5 py-0.5 bg-accent-pink">
                     ESGOTADO
+                  </span>
+                )}
+                {product.images?.length > 1 && (
+                  <span className="text-xs font-display font-semibold text-black/50">
+                    +{product.images.length - 1} foto(s)
                   </span>
                 )}
               </div>

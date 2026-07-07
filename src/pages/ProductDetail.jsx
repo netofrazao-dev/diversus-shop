@@ -18,6 +18,7 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [restockModalOpen, setRestockModalOpen] = useState(false);
+  const [activeImage, setActiveImage] = useState(0);
 
   if (isLoading) {
     return (
@@ -44,6 +45,12 @@ export default function ProductDetail() {
 
   const hasDiscount = product.compare_at_price && product.compare_at_price > product.price;
 
+  const gallery = product.images?.length
+    ? product.images
+    : product.image_url
+    ? [product.image_url]
+    : [];
+
   const handleAddToCart = () => {
     addItem(product, quantity);
     setAdded(true);
@@ -61,24 +68,46 @@ export default function ProductDetail() {
 
       <div className="grid md:grid-cols-2 gap-10">
         {/* Imagem */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="relative bg-primary-50 border-4 border-black rounded-3xl shadow-cartoon-lg overflow-hidden aspect-square"
-        >
-          {(product.is_new || product.is_featured || product.is_sold_out) && (
-            <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
-              {product.is_sold_out && <Badge color="pink">ESGOTADO</Badge>}
-              {!product.is_sold_out && product.is_new && <Badge color="secondary">NOVIDADE</Badge>}
-              {!product.is_sold_out && product.is_featured && <Badge color="yellow">MAIS VENDIDO</Badge>}
+        <div className="flex flex-col gap-3">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative bg-primary-50 border-4 border-black rounded-3xl shadow-cartoon-lg overflow-hidden aspect-square"
+          >
+            {(product.is_new || product.is_featured || product.is_sold_out) && (
+              <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+                {product.is_sold_out && <Badge color="pink">ESGOTADO</Badge>}
+                {!product.is_sold_out && product.is_new && <Badge color="secondary">NOVIDADE</Badge>}
+                {!product.is_sold_out && product.is_featured && <Badge color="yellow">MAIS VENDIDO</Badge>}
+              </div>
+            )}
+            <img
+              src={gallery[activeImage] || '/placeholder-product.png'}
+              alt={product.name}
+              className={`w-full h-full object-cover ${product.is_sold_out ? 'grayscale opacity-70' : ''}`}
+            />
+          </motion.div>
+
+          {/* Miniaturas — só aparece se tiver mais de uma foto */}
+          {gallery.length > 1 && (
+            <div className="flex gap-3 overflow-x-auto pb-1">
+              {gallery.map((imgUrl, index) => (
+                <button
+                  key={imgUrl + index}
+                  type="button"
+                  onClick={() => setActiveImage(index)}
+                  className={`
+                    shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden
+                    border-3 transition-all
+                    ${activeImage === index ? 'border-primary shadow-cartoon-sm' : 'border-black/20 hover:border-black'}
+                  `}
+                >
+                  <img src={imgUrl} alt={`${product.name} — foto ${index + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
             </div>
           )}
-          <img
-            src={product.image_url || '/placeholder-product.png'}
-            alt={product.name}
-            className={`w-full h-full object-cover ${product.is_sold_out ? 'grayscale opacity-70' : ''}`}
-          />
-        </motion.div>
+        </div>
 
         {/* Informações */}
         <div className="flex flex-col gap-5">

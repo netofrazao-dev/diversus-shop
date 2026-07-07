@@ -1,0 +1,25 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-white text-black;
+}
+
+/* Scrollbar mais discreto para as gavetas/listas */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: black;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}

@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Minus, Plus, ChevronLeft } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, ChevronLeft, BellRing } from 'lucide-react';
 import { useProduct } from '../hooks/useProducts';
 import { useCartStore } from '../store/cartStore';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
+import RestockRequestModal from '../components/product/RestockRequestModal';
 
 const formatPrice = (value) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -16,6 +17,7 @@ export default function ProductDetail() {
   const addItem = useCartStore((state) => state.addItem);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  const [restockModalOpen, setRestockModalOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -64,16 +66,17 @@ export default function ProductDetail() {
           animate={{ opacity: 1, scale: 1 }}
           className="relative bg-primary-50 border-4 border-black rounded-3xl shadow-cartoon-lg overflow-hidden aspect-square"
         >
-          {(product.is_new || product.is_featured) && (
+          {(product.is_new || product.is_featured || product.is_sold_out) && (
             <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
-              {product.is_new && <Badge color="secondary">NOVIDADE</Badge>}
-              {product.is_featured && <Badge color="yellow">MAIS VENDIDO</Badge>}
+              {product.is_sold_out && <Badge color="pink">ESGOTADO</Badge>}
+              {!product.is_sold_out && product.is_new && <Badge color="secondary">NOVIDADE</Badge>}
+              {!product.is_sold_out && product.is_featured && <Badge color="yellow">MAIS VENDIDO</Badge>}
             </div>
           )}
           <img
             src={product.image_url || '/placeholder-product.png'}
             alt={product.name}
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover ${product.is_sold_out ? 'grayscale opacity-70' : ''}`}
           />
         </motion.div>
 
@@ -104,45 +107,70 @@ export default function ProductDetail() {
             </span>
           </div>
 
-          {/* Seletor de quantidade */}
-          <div className="flex items-center gap-4">
-            <span className="font-display font-semibold text-sm">Quantidade</span>
-            <div className="flex items-center gap-3 bg-white border-3 border-black rounded-2xl shadow-cartoon-sm px-2 py-1">
-              <button
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="p-2 hover:bg-secondary/30 rounded-xl transition-colors"
-                aria-label="Diminuir quantidade"
+          {product.is_sold_out ? (
+            <>
+              <p className="font-display font-semibold text-black/70 bg-accent-pink/20 border-2 border-black rounded-2xl px-4 py-3 mt-2">
+                Este produto está esgotado no momento.
+              </p>
+              <Button
+                variant="primary"
+                size="xl"
+                icon={BellRing}
+                isFullWidth
+                onClick={() => setRestockModalOpen(true)}
               >
-                <Minus size={16} strokeWidth={3} />
-              </button>
-              <span className="font-display font-bold w-6 text-center">{quantity}</span>
-              <button
-                onClick={() => setQuantity((q) => q + 1)}
-                className="p-2 hover:bg-secondary/30 rounded-xl transition-colors"
-                aria-label="Aumentar quantidade"
+                Avise-me quando chegar
+              </Button>
+            </>
+          ) : (
+            <>
+              {/* Seletor de quantidade */}
+              <div className="flex items-center gap-4">
+                <span className="font-display font-semibold text-sm">Quantidade</span>
+                <div className="flex items-center gap-3 bg-white border-3 border-black rounded-2xl shadow-cartoon-sm px-2 py-1">
+                  <button
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    className="p-2 hover:bg-secondary/30 rounded-xl transition-colors"
+                    aria-label="Diminuir quantidade"
+                  >
+                    <Minus size={16} strokeWidth={3} />
+                  </button>
+                  <span className="font-display font-bold w-6 text-center">{quantity}</span>
+                  <button
+                    onClick={() => setQuantity((q) => q + 1)}
+                    className="p-2 hover:bg-secondary/30 rounded-xl transition-colors"
+                    aria-label="Aumentar quantidade"
+                  >
+                    <Plus size={16} strokeWidth={3} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Botão gigante de adicionar */}
+              <Button
+                variant="primary"
+                size="xl"
+                icon={ShoppingCart}
+                isFullWidth
+                onClick={handleAddToCart}
+                className="mt-2"
               >
-                <Plus size={16} strokeWidth={3} />
-              </button>
-            </div>
-          </div>
+                {added ? 'Adicionado! ✓' : 'Adicionar ao carrinho'}
+              </Button>
 
-          {/* Botão gigante de adicionar */}
-          <Button
-            variant="primary"
-            size="xl"
-            icon={ShoppingCart}
-            isFullWidth
-            onClick={handleAddToCart}
-            className="mt-2"
-          >
-            {added ? 'Adicionado! ✓' : 'Adicionar ao carrinho'}
-          </Button>
-
-          {product.stock > 0 && product.stock <= 5 && (
-            <p className="text-sm font-semibold text-accent-orange">
-              Últimas {product.stock} unidades em estoque!
-            </p>
+              {product.stock > 0 && product.stock <= 5 && (
+                <p className="text-sm font-semibold text-accent-orange">
+                  Últimas {product.stock} unidades em estoque!
+                </p>
+              )}
+            </>
           )}
+
+          <RestockRequestModal
+            product={product}
+            isOpen={restockModalOpen}
+            onClose={() => setRestockModalOpen(false)}
+          />
         </div>
       </div>
     </div>

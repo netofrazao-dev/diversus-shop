@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Eye } from 'lucide-react';
+import { ShoppingCart, Eye, BellRing } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
+import RestockRequestModal from './RestockRequestModal';
 
 /**
  * ProductCard — Card de produto do DIVERSUS SHOP
@@ -11,10 +13,11 @@ import Button from '../ui/Button';
  * e em listagens de busca.
  *
  * props:
- *  - product: { id, name, price, compare_at_price, image_url, is_featured, is_new }
+ *  - product: { id, name, price, compare_at_price, image_url, is_featured, is_new, is_sold_out }
  *  - onAddToCart: fn(product) — chamado ao clicar no botão de carrinho
  */
 export default function ProductCard({ product, onAddToCart }) {
+  const [restockModalOpen, setRestockModalOpen] = useState(false);
   const {
     id,
     name,
@@ -23,6 +26,7 @@ export default function ProductCard({ product, onAddToCart }) {
     image_url: imageUrl,
     is_featured: isFeatured,
     is_new: isNew,
+    is_sold_out: isSoldOut,
   } = product;
 
   const hasDiscount = compareAtPrice && compareAtPrice > price;
@@ -40,10 +44,11 @@ export default function ProductCard({ product, onAddToCart }) {
       "
     >
       {/* Tags */}
-      {(isFeatured || isNew) && (
+      {(isFeatured || isNew || isSoldOut) && (
         <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
-          {isNew && <Badge color="secondary">NOVIDADE</Badge>}
-          {isFeatured && <Badge color="yellow">MAIS VENDIDO</Badge>}
+          {isSoldOut && <Badge color="pink">ESGOTADO</Badge>}
+          {!isSoldOut && isNew && <Badge color="secondary">NOVIDADE</Badge>}
+          {!isSoldOut && isFeatured && <Badge color="yellow">MAIS VENDIDO</Badge>}
         </div>
       )}
 
@@ -52,7 +57,7 @@ export default function ProductCard({ product, onAddToCart }) {
         <img
           src={imageUrl || '/placeholder-product.png'}
           alt={name}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+          className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 ${isSoldOut ? 'grayscale opacity-70' : ''}`}
           loading="lazy"
         />
 
@@ -82,17 +87,36 @@ export default function ProductCard({ product, onAddToCart }) {
           </span>
         </div>
 
-        <Button
-          variant="primary"
-          size="md"
-          icon={ShoppingCart}
-          isFullWidth
-          onClick={() => onAddToCart?.(product)}
-          className="mt-2"
-        >
-          Adicionar
-        </Button>
+        {isSoldOut ? (
+          <Button
+            variant="outline"
+            size="md"
+            icon={BellRing}
+            isFullWidth
+            onClick={() => setRestockModalOpen(true)}
+            className="mt-2"
+          >
+            Avise-me
+          </Button>
+        ) : (
+          <Button
+            variant="primary"
+            size="md"
+            icon={ShoppingCart}
+            isFullWidth
+            onClick={() => onAddToCart?.(product)}
+            className="mt-2"
+          >
+            Adicionar
+          </Button>
+        )}
       </div>
+
+      <RestockRequestModal
+        product={product}
+        isOpen={restockModalOpen}
+        onClose={() => setRestockModalOpen(false)}
+      />
     </motion.div>
   );
 }

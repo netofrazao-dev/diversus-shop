@@ -15,6 +15,7 @@ const emptyForm = {
   category_id: '',
   is_featured: false,
   is_new: false,
+  is_sold_out: false,
   image_url: '',
 };
 
@@ -61,6 +62,7 @@ export default function AdminProducts() {
       category_id: product.category_id || '',
       is_featured: product.is_featured,
       is_new: product.is_new,
+      is_sold_out: product.is_sold_out,
       image_url: product.image_url || '',
     });
     setImagePreview(product.image_url || '');
@@ -106,6 +108,7 @@ export default function AdminProducts() {
         category_id: form.category_id || null,
         is_featured: form.is_featured,
         is_new: form.is_new,
+        is_sold_out: form.is_sold_out,
         image_url: imageUrl,
       };
 
@@ -234,6 +237,15 @@ export default function AdminProducts() {
               />
               Lançamento
             </label>
+            <label className="flex items-center gap-2 font-display font-semibold text-sm">
+              <input
+                type="checkbox"
+                checked={form.is_sold_out}
+                onChange={(e) => setForm({ ...form, is_sold_out: e.target.checked })}
+                className="w-5 h-5 accent-primary"
+              />
+              Esgotado
+            </label>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -273,7 +285,14 @@ export default function AdminProducts() {
               className="w-16 h-16 rounded-xl border-2 border-black object-cover flex-shrink-0"
             />
             <div className="flex-1 min-w-0">
-              <p className="font-display font-semibold truncate">{product.name}</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="font-display font-semibold truncate">{product.name}</p>
+                {product.is_sold_out && (
+                  <span className="text-xs font-display font-bold border-2 border-black rounded-full px-2.5 py-0.5 bg-accent-pink">
+                    ESGOTADO
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-black/60">
                 {product.categories?.name || 'Sem categoria'} — Estoque: {product.stock}
               </p>

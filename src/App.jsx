@@ -1,4 +1,4 @@
-import { BrowserRouter, useLocation } from 'react-router-dom';
+import { HashRouter, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
@@ -26,9 +26,9 @@ function Layout() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <HashRouter>
         <Layout />
-      </BrowserRouter>
+      </HashRouter>
     </QueryClientProvider>
   );
 }

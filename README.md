@@ -79,6 +79,29 @@ npm run build
 npm run preview
 ```
 
+## 8. Deploy no GitHub Pages
+
+O projeto já vem configurado pra funcionar em hospedagens estáticas (usa `HashRouter`, então as rotas não quebram ao dar refresh):
+
+```bash
+npm install
+npm run deploy
+```
+
+Isso builda o projeto e publica a pasta `dist/` na branch `gh-pages` do seu repositório (via pacote `gh-pages`, já incluso). Depois, no GitHub:
+1. Vá em **Settings > Pages**
+2. Em "Branch", selecione `gh-pages` / `root`
+3. Aguarde alguns minutos e acesse o link gerado
+
+⚠️ Lembre de configurar as variáveis de ambiente (`.env.local`) **antes** de rodar `npm run deploy` — o Vite "grava" essas variáveis no build final.
+
+## 9. Produtos esgotados e lista de desejos
+
+No painel Admin (**Produtos**), marque a caixinha **"Esgotado"** ao criar/editar um produto. Isso faz com que:
+- O card e a página do produto mostrem a tag **ESGOTADO** e a imagem fique acinzentada
+- O botão de compra vire **"Avise-me quando chegar"**
+- Ao clicar, o cliente pode (opcionalmente) deixar nome e contato — isso fica salvo e visível na aba **Desejos** do Admin, agrupado por produto, mostrando quantas pessoas querem cada item de volta.
+
 ## Estrutura de pastas
 
 ```

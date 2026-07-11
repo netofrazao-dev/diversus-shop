@@ -7,6 +7,7 @@ import AdminLogin from '../pages/admin/AdminLogin';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import AdminOrders from '../pages/admin/AdminOrders';
 import AdminProducts from '../pages/admin/AdminProducts';
+import AdminCategories from '../pages/admin/AdminCategories';
 import AdminRestockRequests from '../pages/admin/AdminRestockRequests';
 import ProtectedRoute from './ProtectedRoute';
 
@@ -25,6 +26,7 @@ export default function AppRoutes() {
         <Route path="/admin" element={<AdminDashboard />}>
           <Route index element={<AdminOrders />} />
           <Route path="produtos" element={<AdminProducts />} />
+          <Route path="categorias" element={<AdminCategories />} />
           <Route path="desejos" element={<AdminRestockRequests />} />
         </Route>
       </Route>

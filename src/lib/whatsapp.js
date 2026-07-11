@@ -28,8 +28,9 @@ export function buildOrderMessage(customer, items, total) {
   lines.push('');
   lines.push('*Itens do pedido:*');
   items.forEach((item) => {
+    const variantSuffix = item.variantLabel ? ` (${item.variantLabel})` : '';
     lines.push(
-      `• ${item.quantity}x ${item.name} — ${formatPrice(item.price * item.quantity)}`
+      `• ${item.quantity}x ${item.name}${variantSuffix} — ${formatPrice(item.price * item.quantity)}`
     );
   });
   lines.push('');

@@ -72,7 +72,18 @@ Login protegido por Supabase Auth (`/admin/login`). Dentro do painel:
 - **Pedidos**: lista todos os pedidos recebidos com opção de atualizar o status (pendente → confirmado → enviado → entregue / cancelado).
 - **Produtos**: CRUD completo — criar, editar, excluir produtos, com upload de imagem direto para o Supabase Storage (bucket `product-images`).
 
-## 7. Build de produção
+## 10. Categorias, promoções, produtos ocultos, recomendações, combos e variações
+
+No Admin agora você tem:
+
+- **Categorias** (`/admin/categorias`): crie, edite e exclua categorias livremente — não precisa mais mexer no SQL pra isso.
+- **Ocultar produto**: no formulário de produto, desmarque "Visível na loja" — o produto some da loja mas continua salvo no admin (diferente de excluir).
+- **Promoção**: preencha "Preço promocional" (e opcionalmente uma data de início/fim) — a loja mostra automaticamente o preço promocional com o valor antigo riscado, dentro da janela escolhida. Sem data = promoção ativa enquanto o preço estiver preenchido.
+- **Variações** (cor, tamanho, sabor...): crie grupos (ex: "Tamanho") com seus valores (ex: "P", "M", "G"), cada um podendo ter um ajuste de preço (ex: tamanho G custa +R$5) e podendo ser marcado como esgotado individualmente. Na página do produto, o cliente escolhe as opções antes de adicionar ao carrinho.
+- **Recomendações** ("Você também pode gostar"): marque quais outros produtos aparecem recomendados na página deste produto.
+- **Combos** (compre junto e ganhe desconto): escolha outro produto e um desconto (percentual ou valor fixo) que se aplica quando os dois estão no carrinho. O desconto é aplicado automaticamente no carrinho e no checkout.
+
+## 11. Build de produção
 
 ```bash
 npm run build

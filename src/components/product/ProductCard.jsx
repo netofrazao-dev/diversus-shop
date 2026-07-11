@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import RestockRequestModal from './RestockRequestModal';
+import { getEffectivePrice } from '../../hooks/useProducts';
 
 /**
  * ProductCard — Card de produto do DIVERSUS SHOP
@@ -29,7 +30,9 @@ export default function ProductCard({ product, onAddToCart }) {
     is_sold_out: isSoldOut,
   } = product;
 
-  const hasDiscount = compareAtPrice && compareAtPrice > price;
+  const { isPromo, price: effectivePrice, originalPrice } = getEffectivePrice(product);
+  const hasDiscount = isPromo || (compareAtPrice && compareAtPrice > price);
+  const strikethroughPrice = isPromo ? originalPrice : compareAtPrice;
   const formatPrice = (value) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
@@ -44,9 +47,10 @@ export default function ProductCard({ product, onAddToCart }) {
       "
     >
       {/* Tags */}
-      {(isFeatured || isNew || isSoldOut) && (
+      {(isFeatured || isNew || isSoldOut || isPromo) && (
         <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
           {isSoldOut && <Badge color="pink">ESGOTADO</Badge>}
+          {!isSoldOut && isPromo && <Badge color="green">PROMOÇÃO</Badge>}
           {!isSoldOut && isNew && <Badge color="secondary">NOVIDADE</Badge>}
           {!isSoldOut && isFeatured && <Badge color="yellow">MAIS VENDIDO</Badge>}
         </div>
@@ -79,11 +83,11 @@ export default function ProductCard({ product, onAddToCart }) {
         <div className="flex items-baseline gap-2 mt-auto">
           {hasDiscount && (
             <span className="text-sm text-black/40 line-through font-body">
-              {formatPrice(compareAtPrice)}
+              {formatPrice(strikethroughPrice)}
             </span>
           )}
           <span className="font-display font-bold text-xl text-primary">
-            {formatPrice(price)}
+            {formatPrice(effectivePrice)}
           </span>
         </div>
 

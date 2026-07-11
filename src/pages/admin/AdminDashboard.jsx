@@ -1,10 +1,11 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutGrid, Package, LogOut, Store, BellRing } from 'lucide-react';
+import { LayoutGrid, Package, LogOut, Store, BellRing, Tags } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 const NAV_ITEMS = [
   { label: 'Pedidos', to: '/admin', icon: LayoutGrid, end: true },
   { label: 'Produtos', to: '/admin/produtos', icon: Package },
+  { label: 'Categorias', to: '/admin/categorias', icon: Tags },
   { label: 'Desejos', to: '/admin/desejos', icon: BellRing },
 ];
 

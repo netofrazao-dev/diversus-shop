@@ -62,3 +62,91 @@ export function useProduct(productId) {
     enabled: !!productId,
   });
 }
+
+/**
+ * useProductOptions — busca os grupos de variação (ex: Tamanho, Cor)
+ * e seus valores, já ordenados, para montar os seletores na PDP.
+ */
+export function useProductOptions(productId) {
+  return useQuery({
+    queryKey: ['product-options', productId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('product_option_groups')
+        .select('*, product_option_values(*)')
+        .eq('product_id', productId)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+
+      return (data || []).map((group) => ({
+        ...group,
+        product_option_values: [...(group.product_option_values || [])].sort(
+          (a, b) => a.display_order - b.display_order
+        ),
+      }));
+    },
+    enabled: !!productId,
+  });
+}
+
+/**
+ * useProductRecommendations — busca os produtos recomendados
+ * ("Você também pode gostar") para a PDP.
+ */
+export function useProductRecommendations(productId) {
+  return useQuery({
+    queryKey: ['product-recommendations', productId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('product_recommendations')
+        .select('recommended_product_id, products:recommended_product_id(*, categories(name, slug))')
+        .eq('product_id', productId);
+
+      if (error) throw error;
+      return (data || [])
+        .map((row) => row.products)
+        .filter((p) => p && p.is_active);
+    },
+    enabled: !!productId,
+  });
+}
+
+/**
+ * useProductCombos — busca combinações de "compre junto e ganhe desconto"
+ * cadastradas para este produto.
+ */
+export function useProductCombos(productId) {
+  return useQuery({
+    queryKey: ['product-combos', productId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('product_combos')
+        .select('*, combo_product:combo_product_id(*, categories(name, slug))')
+        .eq('product_id', productId);
+
+      if (error) throw error;
+      return (data || []).filter((row) => row.combo_product?.is_active);
+    },
+    enabled: !!productId,
+  });
+}
+
+/**
+ * getEffectivePrice — calcula o preço "de fato" de um produto,
+ * considerando promoção ativa (se dentro da janela de validade).
+ */
+export function getEffectivePrice(product) {
+  const now = new Date();
+  const hasPromo =
+    product.promo_price != null &&
+    product.promo_price < product.price &&
+    (!product.promo_starts_at || new Date(product.promo_starts_at) <= now) &&
+    (!product.promo_ends_at || new Date(product.promo_ends_at) >= now);
+
+  return {
+    isPromo: hasPromo,
+    price: hasPromo ? product.promo_price : product.price,
+    originalPrice: product.price,
+  };
+}

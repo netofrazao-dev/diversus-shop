@@ -22,12 +22,14 @@ const initialForm = {
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const { items, getTotalPrice, clearCart } = useCartStore();
+  const { items, getTotalPrice, getSubtotal, getComboDiscount, clearCart } = useCartStore();
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
   const total = getTotalPrice();
+  const subtotal = getSubtotal();
+  const comboDiscount = getComboDiscount();
 
   const handleChange = (field) => (e) => {
     setForm((f) => ({ ...f, [field]: e.target.value }));
@@ -73,8 +75,8 @@ export default function Checkout() {
       // 2. Cria os itens do pedido
       const orderItems = items.map((item) => ({
         order_id: order.id,
-        product_id: item.id,
-        product_name: item.name,
+        product_id: item.productId,
+        product_name: item.variantLabel ? `${item.name} (${item.variantLabel})` : item.name,
         unit_price: item.price,
         quantity: item.quantity,
       }));
@@ -217,11 +219,25 @@ export default function Checkout() {
               </div>
             ))}
           </div>
-          <div className="border-t-2 border-black pt-3 flex justify-between items-center">
-            <span className="font-display font-semibold">Total</span>
-            <span className="font-display font-bold text-2xl text-primary">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)}
-            </span>
+          <div className="border-t-2 border-black pt-3 flex flex-col gap-1.5">
+            {comboDiscount > 0 && (
+              <>
+                <div className="flex justify-between text-sm text-black/60">
+                  <span>Subtotal</span>
+                  <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(subtotal)}</span>
+                </div>
+                <div className="flex justify-between text-sm font-semibold text-green-700">
+                  <span>Desconto combo</span>
+                  <span>-{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(comboDiscount)}</span>
+                </div>
+              </>
+            )}
+            <div className="flex justify-between items-center">
+              <span className="font-display font-semibold">Total</span>
+              <span className="font-display font-bold text-2xl text-primary">
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)}
+              </span>
+            </div>
           </div>
 
           <Button

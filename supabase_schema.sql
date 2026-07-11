@@ -34,6 +34,9 @@ create table if not exists public.products (
   is_new boolean not null default false,       -- "Lançamentos"
   is_sold_out boolean not null default false,  -- marcado manualmente pelo admin como esgotado
   is_active boolean not null default true,
+  promo_price numeric(10,2),
+  promo_starts_at timestamptz,
+  promo_ends_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -100,7 +103,59 @@ create table if not exists public.restock_requests (
 create index if not exists idx_restock_requests_product on public.restock_requests(product_id);
 
 -- =============================================================
--- 6. TABELA: admins (whitelist de administradores)
+-- 6. VARIAÇÕES — grupos de opção (ex: "Tamanho", "Cor") e valores
+-- =============================================================
+create table if not exists public.product_option_groups (
+  id uuid primary key default gen_random_uuid(),
+  product_id uuid not null references public.products(id) on delete cascade,
+  name text not null,
+  display_order integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.product_option_values (
+  id uuid primary key default gen_random_uuid(),
+  group_id uuid not null references public.product_option_groups(id) on delete cascade,
+  value text not null,
+  price_adjustment numeric(10,2) not null default 0,
+  is_sold_out boolean not null default false,
+  display_order integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_option_groups_product on public.product_option_groups(product_id);
+create index if not exists idx_option_values_group on public.product_option_values(group_id);
+
+-- =============================================================
+-- 7. RECOMENDAÇÕES — "Você também pode gostar"
+-- =============================================================
+create table if not exists public.product_recommendations (
+  id uuid primary key default gen_random_uuid(),
+  product_id uuid not null references public.products(id) on delete cascade,
+  recommended_product_id uuid not null references public.products(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (product_id, recommended_product_id)
+);
+
+create index if not exists idx_recommendations_product on public.product_recommendations(product_id);
+
+-- =============================================================
+-- 8. COMBOS — "compre junto e ganhe desconto"
+-- =============================================================
+create table if not exists public.product_combos (
+  id uuid primary key default gen_random_uuid(),
+  product_id uuid not null references public.products(id) on delete cascade,
+  combo_product_id uuid not null references public.products(id) on delete cascade,
+  discount_percent numeric(5,2),
+  discount_amount numeric(10,2),
+  created_at timestamptz not null default now(),
+  unique (product_id, combo_product_id)
+);
+
+create index if not exists idx_combos_product on public.product_combos(product_id);
+
+-- =============================================================
+-- 9. TABELA: admins (whitelist de administradores)
 -- Usada para diferenciar admin de cliente comum via auth.uid()
 -- =============================================================
 create table if not exists public.admins (
@@ -150,6 +205,10 @@ alter table public.orders enable row level security;
 alter table public.order_items enable row level security;
 alter table public.admins enable row level security;
 alter table public.restock_requests enable row level security;
+alter table public.product_option_groups enable row level security;
+alter table public.product_option_values enable row level security;
+alter table public.product_recommendations enable row level security;
+alter table public.product_combos enable row level security;
 
 -- --- categories: leitura pública, escrita apenas admin ---
 create policy "categories_public_read"
@@ -234,6 +293,26 @@ create policy "restock_requests_admin_read"
 create policy "restock_requests_admin_delete"
   on public.restock_requests for delete
   using (public.is_admin());
+
+-- --- variações, recomendações e combos: leitura pública, escrita só admin ---
+create policy "option_groups_public_read" on public.product_option_groups for select using (true);
+create policy "option_groups_admin_insert" on public.product_option_groups for insert with check (public.is_admin());
+create policy "option_groups_admin_update" on public.product_option_groups for update using (public.is_admin());
+create policy "option_groups_admin_delete" on public.product_option_groups for delete using (public.is_admin());
+
+create policy "option_values_public_read" on public.product_option_values for select using (true);
+create policy "option_values_admin_insert" on public.product_option_values for insert with check (public.is_admin());
+create policy "option_values_admin_update" on public.product_option_values for update using (public.is_admin());
+create policy "option_values_admin_delete" on public.product_option_values for delete using (public.is_admin());
+
+create policy "recommendations_public_read" on public.product_recommendations for select using (true);
+create policy "recommendations_admin_insert" on public.product_recommendations for insert with check (public.is_admin());
+create policy "recommendations_admin_delete" on public.product_recommendations for delete using (public.is_admin());
+
+create policy "combos_public_read" on public.product_combos for select using (true);
+create policy "combos_admin_insert" on public.product_combos for insert with check (public.is_admin());
+create policy "combos_admin_update" on public.product_combos for update using (public.is_admin());
+create policy "combos_admin_delete" on public.product_combos for delete using (public.is_admin());
 
 -- =============================================================
 -- STORAGE: bucket para imagens de produtos

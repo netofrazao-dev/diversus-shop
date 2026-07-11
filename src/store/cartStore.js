@@ -4,12 +4,17 @@ import { persist } from 'zustand/middleware';
 /**
  * cartStore — Estado global do carrinho (Zustand + persist no localStorage)
  *
- * Item do carrinho: { id, name, price, image_url, quantity }
+ * Item do carrinho: { id, productId, name, price, image_url, quantity, variantLabel }
+ * - "id" é único por produto+variação (ex: "abc123::Tamanho:M|Cor:Azul")
+ * - "productId" é o id real do produto (usado pra checar combos)
+ *
+ * Combo: { id, productAId, productBId, productAName, productBName, discountPercent, discountAmount }
  */
 export const useCartStore = create(
   persist(
     (set, get) => ({
       items: [],
+      combos: [], // combos "ativados" pelo cliente (quando ele clica em "adicionar os dois")
       isDrawerOpen: false,
 
       // ---- Ações de UI ----
@@ -18,14 +23,18 @@ export const useCartStore = create(
       toggleDrawer: () => set((state) => ({ isDrawerOpen: !state.isDrawerOpen })),
 
       // ---- Ações do carrinho ----
-      addItem: (product, quantity = 1) => {
+      // product: objeto do produto. variant (opcional): { label, priceAdjustment, signature }
+      addItem: (product, quantity = 1, variant = null) => {
         const items = get().items;
-        const existing = items.find((item) => item.id === product.id);
+        const lineId = variant ? `${product.id}::${variant.signature}` : product.id;
+        const unitPrice = (product.promo_price ?? product.price) + (variant?.priceAdjustment || 0);
+
+        const existing = items.find((item) => item.id === lineId);
 
         if (existing) {
           set({
             items: items.map((item) =>
-              item.id === product.id
+              item.id === lineId
                 ? { ...item, quantity: item.quantity + quantity }
                 : item
             ),
@@ -35,58 +44,123 @@ export const useCartStore = create(
             items: [
               ...items,
               {
-                id: product.id,
+                id: lineId,
+                productId: product.id,
                 name: product.name,
-                price: product.price,
+                price: unitPrice,
                 image_url: product.image_url,
                 quantity,
+                variantLabel: variant?.label || null,
               },
             ],
           });
         }
 
-        // Abre a gaveta automaticamente ao adicionar (feedback imediato)
         set({ isDrawerOpen: true });
       },
 
-      removeItem: (productId) => {
-        set({ items: get().items.filter((item) => item.id !== productId) });
+      // Adiciona dois produtos de uma vez (combo) e registra o desconto do par
+      addCombo: (comboDefinition, productA, productB) => {
+        const { addItem } = get();
+        addItem(productA, 1);
+        addItem(productB, 1);
+
+        set((state) => {
+          const alreadyExists = state.combos.some((c) => c.id === comboDefinition.id);
+          if (alreadyExists) return state;
+          return {
+            combos: [
+              ...state.combos,
+              {
+                id: comboDefinition.id,
+                productAId: productA.id,
+                productBId: productB.id,
+                productAName: productA.name,
+                productBName: productB.name,
+                discountPercent: comboDefinition.discount_percent || null,
+                discountAmount: comboDefinition.discount_amount || null,
+              },
+            ],
+          };
+        });
       },
 
-      updateQuantity: (productId, quantity) => {
+      removeItem: (lineId) => {
+        set({ items: get().items.filter((item) => item.id !== lineId) });
+      },
+
+      updateQuantity: (lineId, quantity) => {
         if (quantity < 1) {
-          get().removeItem(productId);
+          get().removeItem(lineId);
           return;
         }
         set({
           items: get().items.map((item) =>
-            item.id === productId ? { ...item, quantity } : item
+            item.id === lineId ? { ...item, quantity } : item
           ),
         });
       },
 
-      incrementItem: (productId) => {
-        const item = get().items.find((i) => i.id === productId);
-        if (item) get().updateQuantity(productId, item.quantity + 1);
+      incrementItem: (lineId) => {
+        const item = get().items.find((i) => i.id === lineId);
+        if (item) get().updateQuantity(lineId, item.quantity + 1);
       },
 
-      decrementItem: (productId) => {
-        const item = get().items.find((i) => i.id === productId);
-        if (item) get().updateQuantity(productId, item.quantity - 1);
+      decrementItem: (lineId) => {
+        const item = get().items.find((i) => i.id === lineId);
+        if (item) get().updateQuantity(lineId, item.quantity - 1);
       },
 
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: [], combos: [] }),
 
       // ---- Seletores derivados ----
       getTotalItems: () =>
         get().items.reduce((sum, item) => sum + item.quantity, 0),
 
-      getTotalPrice: () =>
+      // Total "cheio", sem descontos de combo
+      getSubtotal: () =>
         get().items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+
+      // Soma de todos os descontos de combo que se aplicam de verdade
+      // (só conta se os DOIS produtos do combo ainda estiverem no carrinho)
+      getComboDiscount: () => {
+        const { items, combos } = get();
+
+        const qtyByProduct = {};
+        items.forEach((item) => {
+          qtyByProduct[item.productId] = (qtyByProduct[item.productId] || 0) + item.quantity;
+        });
+
+        return combos.reduce((totalDiscount, combo) => {
+          const qtyA = qtyByProduct[combo.productAId] || 0;
+          const qtyB = qtyByProduct[combo.productBId] || 0;
+          const pairs = Math.min(qtyA, qtyB);
+          if (pairs === 0) return totalDiscount;
+
+          const itemA = items.find((i) => i.productId === combo.productAId);
+          const itemB = items.find((i) => i.productId === combo.productBId);
+          if (!itemA || !itemB) return totalDiscount;
+
+          let discountPerPair = 0;
+          if (combo.discountPercent) {
+            discountPerPair = ((itemA.price + itemB.price) * combo.discountPercent) / 100;
+          } else if (combo.discountAmount) {
+            discountPerPair = combo.discountAmount;
+          }
+
+          return totalDiscount + discountPerPair * pairs;
+        }, 0);
+      },
+
+      getTotalPrice: () => {
+        const subtotal = get().getSubtotal();
+        const discount = get().getComboDiscount();
+        return Math.max(0, subtotal - discount);
+      },
     }),
     {
-      name: 'diversus-shop-cart', // chave no localStorage
-      partialize: (state) => ({ items: state.items }), // não persiste isDrawerOpen
+      name: 'diversus-shop-cart',
+      partialize: (state) => ({ items: state.items, combos: state.combos }),
     }
   )
 );

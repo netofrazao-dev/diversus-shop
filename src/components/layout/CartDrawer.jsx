@@ -17,9 +17,13 @@ export default function CartDrawer() {
     decrementItem,
     removeItem,
     getTotalPrice,
+    getSubtotal,
+    getComboDiscount,
   } = useCartStore();
 
   const total = getTotalPrice();
+  const subtotal = getSubtotal();
+  const comboDiscount = getComboDiscount();
 
   const handleCheckout = () => {
     closeDrawer();
@@ -139,6 +143,18 @@ export default function CartDrawer() {
             {/* Footer / Total + Checkout */}
             {items.length > 0 && (
               <div className="border-t-3 border-black p-5 flex flex-col gap-3 bg-accent-yellow/20">
+                {comboDiscount > 0 && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-black/60">Subtotal</span>
+                    <span className="text-black/60">{formatPrice(subtotal)}</span>
+                  </div>
+                )}
+                {comboDiscount > 0 && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-semibold text-green-700">Desconto combo</span>
+                    <span className="font-semibold text-green-700">-{formatPrice(comboDiscount)}</span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
                   <span className="font-display font-semibold text-lg">Total</span>
                   <span className="font-display font-bold text-2xl text-primary">

@@ -155,7 +155,18 @@ create table if not exists public.product_combos (
 create index if not exists idx_combos_product on public.product_combos(product_id);
 
 -- =============================================================
--- 9. TABELA: admins (whitelist de administradores)
+-- 10. TABELA: customer_suggestions — "o que você gostaria que a gente vendesse?"
+-- =============================================================
+create table if not exists public.customer_suggestions (
+  id uuid primary key default gen_random_uuid(),
+  message text not null,
+  customer_name text,
+  customer_contact text,
+  created_at timestamptz not null default now()
+);
+
+-- =============================================================
+-- 11. TABELA: admins (whitelist de administradores)
 -- Usada para diferenciar admin de cliente comum via auth.uid()
 -- =============================================================
 create table if not exists public.admins (
@@ -209,6 +220,7 @@ alter table public.product_option_groups enable row level security;
 alter table public.product_option_values enable row level security;
 alter table public.product_recommendations enable row level security;
 alter table public.product_combos enable row level security;
+alter table public.customer_suggestions enable row level security;
 
 -- --- categories: leitura pública, escrita apenas admin ---
 create policy "categories_public_read"
@@ -313,6 +325,11 @@ create policy "combos_public_read" on public.product_combos for select using (tr
 create policy "combos_admin_insert" on public.product_combos for insert with check (public.is_admin());
 create policy "combos_admin_update" on public.product_combos for update using (public.is_admin());
 create policy "combos_admin_delete" on public.product_combos for delete using (public.is_admin());
+
+-- --- sugestões de clientes: qualquer um pode enviar, só admin lê/apaga ---
+create policy "suggestions_public_insert" on public.customer_suggestions for insert with check (true);
+create policy "suggestions_admin_read" on public.customer_suggestions for select using (public.is_admin());
+create policy "suggestions_admin_delete" on public.customer_suggestions for delete using (public.is_admin());
 
 -- =============================================================
 -- STORAGE: bucket para imagens de produtos

@@ -93,20 +93,55 @@ export function useProductOptions(productId) {
 /**
  * useProductRecommendations — busca os produtos recomendados
  * ("Você também pode gostar") para a PDP.
+ *
+ * Prioridade:
+ *  1. Recomendações cadastradas manualmente pelo admin
+ *  2. Automático: outros produtos da mesma categoria
+ *  3. Automático: produtos em destaque (fallback final)
  */
-export function useProductRecommendations(productId) {
+export function useProductRecommendations(productId, categoryId) {
   return useQuery({
-    queryKey: ['product-recommendations', productId],
+    queryKey: ['product-recommendations', productId, categoryId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // 1. Recomendações manuais
+      const { data: manual, error: manualError } = await supabase
         .from('product_recommendations')
         .select('recommended_product_id, products:recommended_product_id(*, categories(name, slug))')
         .eq('product_id', productId);
 
-      if (error) throw error;
-      return (data || [])
+      if (manualError) throw manualError;
+
+      const manualProducts = (manual || [])
         .map((row) => row.products)
         .filter((p) => p && p.is_active);
+
+      if (manualProducts.length > 0) return manualProducts;
+
+      // 2. Automático: mesma categoria
+      if (categoryId) {
+        const { data: sameCategory, error: catError } = await supabase
+          .from('products')
+          .select('*, categories(name, slug)')
+          .eq('category_id', categoryId)
+          .eq('is_active', true)
+          .neq('id', productId)
+          .limit(4);
+
+        if (catError) throw catError;
+        if (sameCategory?.length > 0) return sameCategory;
+      }
+
+      // 3. Automático: destaques (fallback final)
+      const { data: featuredFallback, error: featError } = await supabase
+        .from('products')
+        .select('*, categories(name, slug)')
+        .eq('is_featured', true)
+        .eq('is_active', true)
+        .neq('id', productId)
+        .limit(4);
+
+      if (featError) throw featError;
+      return featuredFallback || [];
     },
     enabled: !!productId,
   });

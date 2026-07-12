@@ -1,7 +1,16 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Instagram, MessageCircle } from 'lucide-react';
+import { Instagram, MessageCircle, MessageSquareHeart } from 'lucide-react';
+import SuggestionModal from '../product/SuggestionModal';
+
+const INSTAGRAM_URL =
+  'https://www.instagram.com/diversus__shop.acessorios?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==';
+
+const STORE_WHATSAPP = import.meta.env.VITE_STORE_WHATSAPP || '5500000000000';
 
 export default function Footer() {
+  const [suggestionOpen, setSuggestionOpen] = useState(false);
+
   return (
     <footer className="bg-black text-white mt-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid sm:grid-cols-3 gap-8">
@@ -19,6 +28,12 @@ export default function Footer() {
           <div className="flex flex-col gap-2 text-sm text-white/70">
             <Link to="/" className="hover:text-secondary">Início</Link>
             <Link to="/catalogo" className="hover:text-secondary">Catálogo</Link>
+            <button
+              onClick={() => setSuggestionOpen(true)}
+              className="flex items-center gap-1.5 hover:text-secondary text-left"
+            >
+              <MessageSquareHeart size={14} /> Sugerir um produto
+            </button>
             <Link to="/admin/login" className="hover:text-secondary">Área do administrador</Link>
           </div>
         </div>
@@ -27,14 +42,18 @@ export default function Footer() {
           <p className="font-display font-semibold mb-3">Fale conosco</p>
           <div className="flex gap-3">
             <a
-              href="#"
+              href={`https://wa.me/${STORE_WHATSAPP}`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="bg-white/10 hover:bg-secondary hover:text-black rounded-full p-2.5 transition-colors"
               aria-label="WhatsApp"
             >
               <MessageCircle size={18} />
             </a>
             <a
-              href="#"
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
               className="bg-white/10 hover:bg-secondary hover:text-black rounded-full p-2.5 transition-colors"
               aria-label="Instagram"
             >
@@ -59,6 +78,8 @@ export default function Footer() {
           faça um sistema/site assim para você clicando aqui
         </a>
       </div>
+
+      <SuggestionModal isOpen={suggestionOpen} onClose={() => setSuggestionOpen(false)} />
     </footer>
   );
 }

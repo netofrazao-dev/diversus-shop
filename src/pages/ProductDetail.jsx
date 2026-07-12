@@ -14,6 +14,7 @@ import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import RestockRequestModal from '../components/product/RestockRequestModal';
 import ProductCard from '../components/product/ProductCard';
+import InstagramCTA from '../components/layout/InstagramCTA';
 
 const formatPrice = (value) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -22,7 +23,7 @@ export default function ProductDetail() {
   const { id } = useParams();
   const { data: product, isLoading } = useProduct(id);
   const { data: optionGroups } = useProductOptions(id);
-  const { data: recommendations } = useProductRecommendations(id);
+  const { data: recommendations } = useProductRecommendations(id, product?.category_id);
   const { data: combos } = useProductCombos(id);
 
   const addItem = useCartStore((state) => state.addItem);
@@ -357,6 +358,10 @@ export default function ProductDetail() {
           </div>
         </section>
       )}
+
+      <div className="mt-14 max-w-md mx-auto">
+        <InstagramCTA variant="compact" />
+      </div>
     </div>
   );
 }

@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles, Watch, Shirt, Gem } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { ArrowRight, Sparkles, Watch, Shirt, Gem, MessageSquareHeart, PartyPopper } from 'lucide-react';
 import { useProducts } from '../hooks/useProducts';
 import { useCartStore } from '../store/cartStore';
 import ProductSection from '../components/product/ProductSection';
 import Button from '../components/ui/Button';
+import InstagramCTA from '../components/layout/InstagramCTA';
+import SuggestionModal from '../components/product/SuggestionModal';
 
 const CATEGORY_SHORTCUTS = [
   { label: 'Relógios', icon: Watch, slug: 'relogios', color: 'bg-primary-100' },
@@ -13,12 +16,27 @@ const CATEGORY_SHORTCUTS = [
 ];
 
 export default function Home() {
+  const location = useLocation();
   const { data: featured, isLoading: loadingFeatured } = useProducts({ featured: true, limit: 8 });
   const { data: newArrivals, isLoading: loadingNew } = useProducts({ isNew: true, limit: 8 });
   const addItem = useCartStore((state) => state.addItem);
+  const [suggestionOpen, setSuggestionOpen] = useState(false);
+  const orderSuccess = location.state?.orderSuccess;
 
   return (
     <div>
+      {/* Mensagem pós-compra */}
+      {orderSuccess && (
+        <div className="bg-accent-green/30 border-b-4 border-black">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-3 flex-wrap justify-center text-center">
+            <PartyPopper size={22} />
+            <p className="font-display font-semibold">
+              Pedido enviado! A loja já recebeu tudo pelo WhatsApp. Enquanto isso, que tal seguir a gente no Instagram?
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* HERO */}
       <section className="relative overflow-hidden bg-primary-50 border-b-4 border-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 grid lg:grid-cols-2 gap-10 items-center">
@@ -116,6 +134,31 @@ export default function Home() {
           accentColor="secondary"
         />
       </div>
+
+      {/* INSTAGRAM */}
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 py-14">
+        <InstagramCTA />
+      </section>
+
+      {/* SUGESTÃO DE PRODUTO */}
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 pb-16">
+        <div className="bg-accent-yellow/20 border-3 border-black rounded-3xl shadow-cartoon p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
+          <div className="bg-white border-3 border-black rounded-full p-4 shadow-cartoon-sm shrink-0">
+            <MessageSquareHeart size={28} className="text-primary" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-display font-bold text-xl">O que você gostaria que a gente vendesse?</h3>
+            <p className="text-black/60 text-sm mt-1">
+              Sua ideia pode virar o próximo produto da loja. Conta pra gente!
+            </p>
+          </div>
+          <Button variant="primary" onClick={() => setSuggestionOpen(true)}>
+            Enviar sugestão
+          </Button>
+        </div>
+      </section>
+
+      <SuggestionModal isOpen={suggestionOpen} onClose={() => setSuggestionOpen(false)} />
     </div>
   );
 }

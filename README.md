@@ -83,7 +83,13 @@ No Admin agora você tem:
 - **Recomendações** ("Você também pode gostar"): marque quais outros produtos aparecem recomendados na página deste produto.
 - **Combos** (compre junto e ganhe desconto): escolha outro produto e um desconto (percentual ou valor fixo) que se aplica quando os dois estão no carrinho. O desconto é aplicado automaticamente no carrinho e no checkout.
 
-## 11. Build de produção
+## 12. Caixinha de sugestões, Instagram e recomendações automáticas
+
+- **Sugestão de produto**: no rodapé ("Sugerir um produto") e na Home tem um formulário onde o cliente conta o que gostaria de ver na loja. Veja tudo em `/admin/sugestoes`.
+- **Instagram**: banner grande na Home, banner compacto na página de produto e no rodapé, todos apontando pro seu perfil real (`@diversus__shop.acessorios`). Depois de finalizar uma compra, o cliente volta pra Home e vê um convite pra seguir o Instagram.
+- **Recomendações automáticas**: se você não cadastrar recomendações manuais pra um produto (na aba "Recomendações" do formulário), o site já sugere sozinho — primeiro tenta produtos da mesma categoria, e se não achar, cai pros produtos em destaque. Se você cadastrar manualmente, isso tem prioridade sobre o automático.
+
+## 13. Build de produção
 
 ```bash
 npm run build

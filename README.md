@@ -89,7 +89,13 @@ No Admin agora você tem:
 - **Instagram**: banner grande na Home, banner compacto na página de produto e no rodapé, todos apontando pro seu perfil real (`@diversus__shop.acessorios`). Depois de finalizar uma compra, o cliente volta pra Home e vê um convite pra seguir o Instagram.
 - **Recomendações automáticas**: se você não cadastrar recomendações manuais pra um produto (na aba "Recomendações" do formulário), o site já sugere sozinho — primeiro tenta produtos da mesma categoria, e se não achar, cai pros produtos em destaque. Se você cadastrar manualmente, isso tem prioridade sobre o automático.
 
-## 13. Build de produção
+## 14. Baixa automática de estoque, dashboard e privacidade (LGPD)
+
+- **Estoque automático**: toda venda desconta o estoque do produto sozinha (via trigger no banco), e quando chega a zero o produto já é marcado como esgotado — sem precisar fazer isso manualmente no admin.
+- **Dashboard**: a tela de Pedidos agora mostra 3 números no topo: valor vendido hoje, quantos pedidos estão pendentes, e o produto mais vendido dos últimos 7 dias.
+- **Política de Privacidade** (`/privacidade`): página completa explicando quais dados são coletados e para quê, em conformidade com a LGPD. Linkada no rodapé, e o checkout agora exige que o cliente aceite a política antes de finalizar o pedido (checkbox obrigatório).
+
+## 15. Build de produção
 
 ```bash
 npm run build

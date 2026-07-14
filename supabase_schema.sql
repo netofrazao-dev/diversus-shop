@@ -197,6 +197,32 @@ create trigger trg_orders_updated_at
   for each row execute function public.set_updated_at();
 
 -- =============================================================
+-- FUNÇÃO + TRIGGER: baixa automática de estoque
+-- Toda vez que um item de pedido é criado, reduz o estoque do
+-- produto correspondente e marca como esgotado se chegar a zero.
+-- =============================================================
+create or replace function public.decrement_product_stock()
+returns trigger as $$
+begin
+  update public.products
+  set
+    stock = greatest(stock - new.quantity, 0),
+    is_sold_out = (stock - new.quantity) <= 0
+  where id = new.product_id;
+
+  return new;
+end;
+$$ language plpgsql security definer
+set search_path = public;
+
+drop trigger if exists trg_decrement_stock on public.order_items;
+create trigger trg_decrement_stock
+  after insert on public.order_items
+  for each row
+  when (new.product_id is not null)
+  execute function public.decrement_product_stock();
+
+-- =============================================================
 -- FUNÇÃO AUXILIAR: verifica se o usuário logado é admin
 -- =============================================================
 create or replace function public.is_admin()

@@ -35,6 +35,7 @@ export default function Footer() {
               <MessageSquareHeart size={14} /> Sugerir um produto
             </button>
             <Link to="/admin/login" className="hover:text-secondary">Área do administrador</Link>
+            <Link to="/privacidade" className="hover:text-secondary">Política de Privacidade</Link>
           </div>
         </div>
 

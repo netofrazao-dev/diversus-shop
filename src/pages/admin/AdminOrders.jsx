@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Phone, MapPin, RefreshCcw } from 'lucide-react';
+import { Phone, MapPin, RefreshCcw, Wallet, Clock, Trophy } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 
 const STATUS_OPTIONS = ['pendente', 'confirmado', 'enviado', 'entregue', 'cancelado'];
@@ -42,6 +42,40 @@ export default function AdminOrders() {
     await supabase.from('orders').update({ status }).eq('id', orderId);
   };
 
+  // ---- Estatísticas rápidas ----
+  const stats = useMemo(() => {
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const soldToday = orders
+      .filter((o) => new Date(o.created_at) >= startOfDay && o.status !== 'cancelado')
+      .reduce((sum, o) => sum + Number(o.total), 0);
+
+    const pendingCount = orders.filter((o) => o.status === 'pendente').length;
+
+    // Produto mais vendido nos últimos 7 dias (por quantidade)
+    const qtyByProduct = {};
+    orders
+      .filter((o) => new Date(o.created_at) >= sevenDaysAgo && o.status !== 'cancelado')
+      .forEach((o) => {
+        (o.order_items || []).forEach((item) => {
+          qtyByProduct[item.product_name] = (qtyByProduct[item.product_name] || 0) + item.quantity;
+        });
+      });
+
+    let topProduct = null;
+    let topQty = 0;
+    Object.entries(qtyByProduct).forEach(([name, qty]) => {
+      if (qty > topQty) {
+        topProduct = name;
+        topQty = qty;
+      }
+    });
+
+    return { soldToday, pendingCount, topProduct, topQty };
+  }, [orders]);
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
@@ -53,6 +87,43 @@ export default function AdminOrders() {
           <RefreshCcw size={16} /> Atualizar
         </button>
       </div>
+
+      {/* Estatísticas rápidas */}
+      {!loading && orders.length > 0 && (
+        <div className="grid sm:grid-cols-3 gap-4">
+          <div className="bg-white border-3 border-black rounded-2xl shadow-cartoon-sm p-4 flex items-center gap-3">
+            <div className="bg-accent-green/40 border-2 border-black rounded-full p-2.5 shrink-0">
+              <Wallet size={20} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-display font-semibold text-black/50">Vendido hoje</p>
+              <p className="font-display font-bold text-xl truncate">{formatPrice(stats.soldToday)}</p>
+            </div>
+          </div>
+
+          <div className="bg-white border-3 border-black rounded-2xl shadow-cartoon-sm p-4 flex items-center gap-3">
+            <div className="bg-accent-yellow/60 border-2 border-black rounded-full p-2.5 shrink-0">
+              <Clock size={20} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-display font-semibold text-black/50">Pedidos pendentes</p>
+              <p className="font-display font-bold text-xl">{stats.pendingCount}</p>
+            </div>
+          </div>
+
+          <div className="bg-white border-3 border-black rounded-2xl shadow-cartoon-sm p-4 flex items-center gap-3">
+            <div className="bg-secondary/40 border-2 border-black rounded-full p-2.5 shrink-0">
+              <Trophy size={20} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-display font-semibold text-black/50">Mais vendido (7 dias)</p>
+              <p className="font-display font-bold text-sm truncate">
+                {stats.topProduct ? `${stats.topProduct} (${stats.topQty}x)` : '—'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <p className="font-display text-black/50">Carregando pedidos...</p>

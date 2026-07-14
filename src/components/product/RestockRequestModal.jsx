@@ -4,6 +4,7 @@ import { X, BellRing, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
+import { Link } from 'react-router-dom';
 
 /**
  * RestockRequestModal — Modal de interesse em produto esgotado
@@ -114,6 +115,13 @@ export default function RestockRequestModal({ product, isOpen, onClose }) {
                 <Button type="submit" variant="primary" isFullWidth isLoading={submitting}>
                   Quero ser avisado
                 </Button>
+                <p className="text-[11px] text-black/40 text-center -mt-2">
+                  Seus dados são usados só para esse aviso. Veja nossa{' '}
+                  <Link to="/privacidade" target="_blank" className="underline">
+                    Política de Privacidade
+                  </Link>
+                  .
+                </p>
               </form>
             )}
           </motion.div>

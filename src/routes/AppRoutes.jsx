@@ -3,6 +3,7 @@ import Home from '../pages/Home';
 import Catalog from '../pages/Catalog';
 import ProductDetail from '../pages/ProductDetail';
 import Checkout from '../pages/Checkout';
+import PrivacyPolicy from '../pages/PrivacyPolicy';
 import AdminLogin from '../pages/admin/AdminLogin';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import AdminOrders from '../pages/admin/AdminOrders';
@@ -20,6 +21,7 @@ export default function AppRoutes() {
       <Route path="/catalogo" element={<Catalog />} />
       <Route path="/produto/:id" element={<ProductDetail />} />
       <Route path="/checkout" element={<Checkout />} />
+      <Route path="/privacidade" element={<PrivacyPolicy />} />
 
       {/* Admin */}
       <Route path="/admin/login" element={<AdminLogin />} />

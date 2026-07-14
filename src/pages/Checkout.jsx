@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MapPin, User, Phone, Mail, Home, Hash, CheckCircle2 } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
@@ -26,6 +26,7 @@ export default function Checkout() {
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [consentAccepted, setConsentAccepted] = useState(false);
 
   const total = getTotalPrice();
   const subtotal = getSubtotal();
@@ -43,6 +44,7 @@ export default function Checkout() {
     if (!form.street.trim()) newErrors.street = 'Informe a rua';
     if (!form.number.trim()) newErrors.number = 'Informe o número';
     if (!form.neighborhood.trim()) newErrors.neighborhood = 'Informe o bairro';
+    if (!consentAccepted) newErrors.consent = 'É preciso aceitar a Política de Privacidade para continuar';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -238,6 +240,30 @@ export default function Checkout() {
                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)}
               </span>
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="flex items-start gap-2 text-xs text-black/70">
+              <input
+                type="checkbox"
+                checked={consentAccepted}
+                onChange={(e) => {
+                  setConsentAccepted(e.target.checked);
+                  setErrors((err) => ({ ...err, consent: null }));
+                }}
+                className="w-4 h-4 mt-0.5 accent-primary shrink-0"
+              />
+              <span>
+                Li e concordo com a{' '}
+                <Link to="/privacidade" target="_blank" className="font-semibold underline">
+                  Política de Privacidade
+                </Link>{' '}
+                e autorizo o uso dos meus dados para processar este pedido.
+              </span>
+            </label>
+            {errors.consent && (
+              <p className="text-red-600 font-semibold text-xs ml-6">{errors.consent}</p>
+            )}
           </div>
 
           <Button

@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Menu, X } from 'lucide-react';
+import { ShoppingCart, Menu, X, Search } from 'lucide-react';
 import { useCartStore } from '../../store/cartStore';
 import Badge from '../ui/Badge';
 
@@ -14,9 +14,21 @@ const NAV_LINKS = [
 ];
 
 export default function Navbar() {
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
   const totalItems = useCartStore((state) => state.getTotalItems());
   const openDrawer = useCartStore((state) => state.openDrawer);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    const query = searchValue.trim();
+    if (!query) return;
+    navigate(`/catalogo?busca=${encodeURIComponent(query)}`);
+    setSearchOpen(false);
+    setMobileOpen(false);
+  };
 
   return (
     <header className="sticky top-0 z-30 bg-white border-b-4 border-black">
@@ -56,6 +68,15 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             <motion.button
               whileTap={{ y: 2 }}
+              onClick={() => setSearchOpen((v) => !v)}
+              className="bg-white border-3 border-black rounded-2xl p-2.5 shadow-cartoon-sm active:translate-y-0.5 active:shadow-none transition-all"
+              aria-label="Buscar produtos"
+            >
+              {searchOpen ? <X size={20} strokeWidth={2.5} /> : <Search size={20} strokeWidth={2.5} />}
+            </motion.button>
+
+            <motion.button
+              whileTap={{ y: 2 }}
               onClick={openDrawer}
               className="relative bg-white border-3 border-black rounded-2xl p-2.5 shadow-cartoon active:translate-y-1 active:shadow-none transition-all"
               aria-label="Abrir carrinho"
@@ -81,6 +102,34 @@ export default function Navbar() {
           </div>
         </div>
       </div>
+
+      {/* Barra de busca */}
+      <AnimatePresence>
+        {searchOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden border-t-3 border-black bg-primary-50"
+          >
+            <form onSubmit={handleSearchSubmit} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex gap-2">
+              <input
+                autoFocus
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                placeholder="Buscar produtos..."
+                className="flex-1 border-3 border-black rounded-2xl px-4 py-2.5 font-body shadow-cartoon-sm focus:outline-none"
+              />
+              <button
+                type="submit"
+                className="bg-primary text-white border-3 border-black rounded-2xl px-5 font-display font-semibold shadow-cartoon-sm active:translate-y-0.5 active:shadow-none transition-all"
+              >
+                <Search size={18} />
+              </button>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Menu mobile */}
       <AnimatePresence>

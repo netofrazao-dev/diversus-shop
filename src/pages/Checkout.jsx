@@ -5,8 +5,10 @@ import { MapPin, User, Phone, Mail, Home, Hash, CheckCircle2 } from 'lucide-reac
 import { useCartStore } from '../store/cartStore';
 import { openWhatsAppOrder } from '../lib/whatsapp';
 import { supabase } from '../lib/supabaseClient';
+import { isPixConfigured } from '../lib/pix';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
+import PixPayment from '../components/product/PixPayment';
 
 const STORE_WHATSAPP = import.meta.env.VITE_STORE_WHATSAPP || '5500000000000';
 
@@ -27,6 +29,10 @@ export default function Checkout() {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [consentAccepted, setConsentAccepted] = useState(false);
+
+  // Depois que o pedido é criado, se a loja tiver Pix configurado,
+  // mostramos a tela de pagamento antes de voltar pra loja.
+  const [completedOrder, setCompletedOrder] = useState(null); // { amount, shortId }
 
   const total = getTotalPrice();
   const subtotal = getSubtotal();
@@ -89,9 +95,16 @@ export default function Checkout() {
       // 3. Abre o WhatsApp com o pedido formatado
       openWhatsAppOrder(STORE_WHATSAPP, form, items, total);
 
-      // 4. Limpa o carrinho e redireciona
+      // 4. Limpa o carrinho
       clearCart();
-      navigate('/', { state: { orderSuccess: true } });
+
+      // 5. Se a loja tiver Pix configurado, mostra a tela de pagamento.
+      //    Senão, volta direto pra loja como antes.
+      if (isPixConfigured()) {
+        setCompletedOrder({ amount: total, shortId: order.id.slice(0, 8) });
+      } else {
+        navigate('/', { state: { orderSuccess: true } });
+      }
     } catch (err) {
       console.error(err);
       setErrors((e2) => ({ ...e2, general: 'Não foi possível finalizar o pedido. Tente novamente.' }));
@@ -99,6 +112,19 @@ export default function Checkout() {
       setSubmitting(false);
     }
   };
+
+  // ---- Tela de pagamento Pix (depois do pedido criado) ----
+  if (completedOrder) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+        <PixPayment
+          amount={completedOrder.amount}
+          orderShortId={completedOrder.shortId}
+          onContinue={() => navigate('/', { state: { orderSuccess: true } })}
+        />
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (

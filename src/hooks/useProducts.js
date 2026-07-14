@@ -11,7 +11,7 @@ import { supabase } from '../lib/supabaseClient';
  *  - limit: number
  */
 export function useProducts(options = {}) {
-  const { featured, isNew, categorySlug, limit } = options;
+  const { featured, isNew, categorySlug, limit, search } = options;
 
   return useQuery({
     queryKey: ['products', options],
@@ -33,6 +33,7 @@ export function useProducts(options = {}) {
       if (featured) query = query.eq('is_featured', true);
       if (isNew) query = query.eq('is_new', true);
       if (categorySlug) query = query.eq('categories.slug', categorySlug);
+      if (search) query = query.ilike('name', `%${search}%`);
       if (limit) query = query.limit(limit);
 
       const { data, error } = await query;

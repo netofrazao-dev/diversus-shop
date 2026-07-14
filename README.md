@@ -95,7 +95,13 @@ No Admin agora você tem:
 - **Dashboard**: a tela de Pedidos agora mostra 3 números no topo: valor vendido hoje, quantos pedidos estão pendentes, e o produto mais vendido dos últimos 7 dias.
 - **Política de Privacidade** (`/privacidade`): página completa explicando quais dados são coletados e para quê, em conformidade com a LGPD. Linkada no rodapé, e o checkout agora exige que o cliente aceite a política antes de finalizar o pedido (checkbox obrigatório).
 
-## 15. Build de produção
+## 16. Busca de produtos e pagamento via Pix
+
+- **Busca**: ícone de lupa na Navbar abre uma barrinha de busca por nome do produto — funciona sozinha com o que já existe no banco, não precisa configurar nada.
+- **Pix com QR Code**: para ativar, preencha no `.env.local` (e nas variáveis de ambiente do Netlify) a `VITE_STORE_PIX_KEY` com a chave Pix da loja (CPF, CNPJ, e-mail, telefone ou chave aleatória), e opcionalmente `VITE_STORE_PIX_NAME` e `VITE_STORE_PIX_CITY`. Com a chave preenchida, depois que o cliente confirma o pedido (e o WhatsApp já abriu), aparece uma tela com QR Code e o código "Pix Copia e Cola" prontos pra pagamento imediato — sem gateway, sem taxas, sem backend. Se `VITE_STORE_PIX_KEY` ficar em branco, essa etapa simplesmente não aparece e o fluxo continua como antes.
+  - ⚠️ Isso gera um Pix estático (sem confirmação automática de pagamento) — o cliente ainda deve mandar o comprovante pela conversa do WhatsApp que já abre automaticamente.
+
+## 17. Build de produção
 
 ```bash
 npm run build

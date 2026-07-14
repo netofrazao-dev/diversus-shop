@@ -7,15 +7,20 @@ import ProductCard from '../components/product/ProductCard';
 export default function Catalog() {
   const [searchParams] = useSearchParams();
   const categorySlug = searchParams.get('categoria') || undefined;
+  const searchQuery = searchParams.get('busca') || undefined;
   const addItem = useCartStore((state) => state.addItem);
 
-  const { data: products, isLoading } = useProducts({ categorySlug });
+  const { data: products, isLoading } = useProducts({ categorySlug, search: searchQuery });
+
+  const title = searchQuery
+    ? `Resultados para "${searchQuery}"`
+    : categorySlug
+    ? `Categoria: ${categorySlug}`
+    : 'Catálogo completo';
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <h1 className="font-display font-bold text-3xl sm:text-4xl mb-2">
-        {categorySlug ? `Categoria: ${categorySlug}` : 'Catálogo completo'}
-      </h1>
+      <h1 className="font-display font-bold text-3xl sm:text-4xl mb-2">{title}</h1>
       <p className="text-black/60 mb-8">
         Explore nossos acessórios e encontre o seu estilo.
       </p>
@@ -44,7 +49,9 @@ export default function Catalog() {
         </div>
       ) : (
         <p className="font-display font-semibold text-black/50 text-center py-16">
-          Nenhum produto encontrado nesta categoria.
+          {searchQuery
+            ? `Nenhum produto encontrado para "${searchQuery}".`
+            : 'Nenhum produto encontrado nesta categoria.'}
         </p>
       )}
     </div>

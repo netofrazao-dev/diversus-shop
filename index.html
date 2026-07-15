@@ -9,6 +9,32 @@
       name="description"
       content="Relógios, camisas e cordões com estilo. Compre agora na DIVERSUS SHOP."
     />
+
+    <!--
+      IMPORTANTE: como o site é todo renderizado no navegador (SPA), estas
+      tags são o que aparece quando ALGUÉM COMPARTILHA QUALQUER LINK do
+      site (WhatsApp, Instagram, etc.) — inclusive links de produtos
+      específicos, já que os robôs de preview não esperam o JavaScript
+      rodar para "ver" o nome/imagem daquele produto.
+
+      Troque og:image por uma imagem sua (1200x630px) em /public/og-image.png
+      para o preview de compartilhamento ficar bonito com a marca da loja.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="DIVERSUS SHOP" />
+    <meta property="og:title" content="DIVERSUS SHOP — Acessórios com atitude" />
+    <meta
+      property="og:description"
+      content="Relógios, camisas e cordões com estilo. Confira a coleção completa e peça pelo WhatsApp."
+    />
+    <meta property="og:image" content="%BASE_URL%og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="DIVERSUS SHOP — Acessórios com atitude" />
+    <meta
+      name="twitter:description"
+      content="Relógios, camisas e cordões com estilo. Confira a coleção completa e peça pelo WhatsApp."
+    />
+    <meta name="twitter:image" content="%BASE_URL%og-image.png" />
   </head>
   <body>
     <div id="root"></div>

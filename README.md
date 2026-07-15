@@ -101,7 +101,14 @@ No Admin agora você tem:
 - **Pix com QR Code**: para ativar, preencha no `.env.local` (e nas variáveis de ambiente do Netlify) a `VITE_STORE_PIX_KEY` com a chave Pix da loja (CPF, CNPJ, e-mail, telefone ou chave aleatória), e opcionalmente `VITE_STORE_PIX_NAME` e `VITE_STORE_PIX_CITY`. Com a chave preenchida, depois que o cliente confirma o pedido (e o WhatsApp já abriu), aparece uma tela com QR Code e o código "Pix Copia e Cola" prontos pra pagamento imediato — sem gateway, sem taxas, sem backend. Se `VITE_STORE_PIX_KEY` ficar em branco, essa etapa simplesmente não aparece e o fluxo continua como antes.
   - ⚠️ Isso gera um Pix estático (sem confirmação automática de pagamento) — o cliente ainda deve mandar o comprovante pela conversa do WhatsApp que já abre automaticamente.
 
-## 17. Build de produção
+## 18. Compartilhar produto, preview ao compartilhar (SEO) e anti-spam
+
+- **Compartilhar produto**: botão ao lado do título na página do produto. No celular, abre o menu nativo de compartilhamento (WhatsApp, Instagram, etc). No computador, copia o link.
+- **Preview ao compartilhar (Open Graph)**: qualquer link do site agora mostra título, descrição e uma imagem de banner ao ser colado no WhatsApp/Instagram/Twitter. Troque `public/og-image.png` pela sua própria arte (1200x630px) quando quiser personalizar — a que está lá é só um placeholder gerado automaticamente.
+  - ⚠️ Limitação importante: como o site é uma SPA (tudo roda no navegador), esse preview usa sempre o **mesmo título/imagem genéricos da loja**, mesmo compartilhando o link de um produto específico — os robôs do WhatsApp/Instagram não esperam o site carregar os dados daquele produto. Pra ter preview individual por produto (nome, foto e preço de cada peça), seria necessário migrar pra um framework com renderização no servidor (Next.js) ou usar um serviço de pré-renderização — é uma mudança grande, não fiz agora, mas fica registrado caso queira no futuro.
+- **Anti-spam (honeypot)**: os formulários de Checkout, "avise-me quando chegar" e "sugestão de produto" agora têm um campo invisível que só bots preenchem. Se vier preenchido, o envio é ignorado silenciosamente — não muda nada na experiência de clientes de verdade.
+
+## 19. Build de produção
 
 ```bash
 npm run build

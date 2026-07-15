@@ -15,6 +15,8 @@ import Badge from '../components/ui/Badge';
 import RestockRequestModal from '../components/product/RestockRequestModal';
 import ProductCard from '../components/product/ProductCard';
 import InstagramCTA from '../components/layout/InstagramCTA';
+import ShareButton from '../components/product/ShareButton';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 const formatPrice = (value) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -34,6 +36,8 @@ export default function ProductDetail() {
   const [restockModalOpen, setRestockModalOpen] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState({}); // { groupId: valueObj }
+
+  useDocumentTitle(product ? `${product.name} — DIVERSUS SHOP` : undefined);
 
   const hasOptions = optionGroups && optionGroups.length > 0;
   const allOptionsSelected =
@@ -161,9 +165,16 @@ export default function ProductDetail() {
             </span>
           )}
 
-          <h1 className="font-display font-bold text-3xl sm:text-4xl text-black">
-            {product.name}
-          </h1>
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="font-display font-bold text-3xl sm:text-4xl text-black">
+              {product.name}
+            </h1>
+            <ShareButton
+              title={product.name}
+              text={`Olha esse produto na DIVERSUS SHOP: ${product.name}`}
+              className="shrink-0"
+            />
+          </div>
 
           {product.description && (
             <p className="font-body text-black/70 leading-relaxed">{product.description}</p>

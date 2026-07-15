@@ -9,6 +9,7 @@ import { isPixConfigured } from '../lib/pix';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import PixPayment from '../components/product/PixPayment';
+import HoneypotField from '../components/ui/HoneypotField';
 
 const STORE_WHATSAPP = import.meta.env.VITE_STORE_WHATSAPP || '5500000000000';
 
@@ -29,6 +30,7 @@ export default function Checkout() {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [consentAccepted, setConsentAccepted] = useState(false);
+  const [honeypot, setHoneypot] = useState('');
 
   // Depois que o pedido é criado, se a loja tiver Pix configurado,
   // mostramos a tela de pagamento antes de voltar pra loja.
@@ -57,6 +59,7 @@ export default function Checkout() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (honeypot) return; // preenchido = bot, aborta silenciosamente
     if (items.length === 0) return;
     if (!validate()) return;
 
@@ -148,6 +151,7 @@ export default function Checkout() {
       </p>
 
       <form onSubmit={handleSubmit} className="grid lg:grid-cols-3 gap-8">
+        <HoneypotField value={honeypot} onChange={setHoneypot} />
         {/* Formulário */}
         <div className="lg:col-span-2 flex flex-col gap-6">
           <div className="bg-white border-3 border-black rounded-2xl shadow-cartoon p-5 sm:p-6 flex flex-col gap-4">

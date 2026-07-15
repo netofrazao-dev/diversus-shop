@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabaseClient';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 import { Link } from 'react-router-dom';
+import HoneypotField from '../ui/HoneypotField';
 
 /**
  * RestockRequestModal — Modal de interesse em produto esgotado
@@ -18,9 +19,11 @@ export default function RestockRequestModal({ product, isOpen, onClose }) {
   const [contact, setContact] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [honeypot, setHoneypot] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (honeypot) return; // preenchido = bot, aborta silenciosamente
     setSubmitting(true);
     try {
       await supabase.from('restock_requests').insert({
@@ -44,6 +47,7 @@ export default function RestockRequestModal({ product, isOpen, onClose }) {
       setDone(false);
       setName('');
       setContact('');
+      setHoneypot('');
     }, 300);
   };
 
@@ -88,6 +92,7 @@ export default function RestockRequestModal({ product, isOpen, onClose }) {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                <HoneypotField value={honeypot} onChange={setHoneypot} />
                 <div className="flex flex-col items-center text-center gap-2 mb-1">
                   <div className="bg-primary-100 border-3 border-black rounded-full p-3">
                     <BellRing size={24} className="text-primary" />

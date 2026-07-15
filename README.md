@@ -108,7 +108,14 @@ No Admin agora você tem:
   - ⚠️ Limitação importante: como o site é uma SPA (tudo roda no navegador), esse preview usa sempre o **mesmo título/imagem genéricos da loja**, mesmo compartilhando o link de um produto específico — os robôs do WhatsApp/Instagram não esperam o site carregar os dados daquele produto. Pra ter preview individual por produto (nome, foto e preço de cada peça), seria necessário migrar pra um framework com renderização no servidor (Next.js) ou usar um serviço de pré-renderização — é uma mudança grande, não fiz agora, mas fica registrado caso queira no futuro.
 - **Anti-spam (honeypot)**: os formulários de Checkout, "avise-me quando chegar" e "sugestão de produto" agora têm um campo invisível que só bots preenchem. Se vier preenchido, o envio é ignorado silenciosamente — não muda nada na experiência de clientes de verdade.
 
-## 19. Build de produção
+## 20. Taxa de entrega e horário
+
+O checkout e o carrinho agora somam uma **taxa de entrega fixa de R$1,00** ao total (aparece como linha separada, e também vai discriminada na mensagem do WhatsApp). Junto, mostra o aviso "As entregas começam a partir das 15h30" — tanto no carrinho quanto no checkout.
+
+- Pra mudar o **valor** da taxa, defina `VITE_DELIVERY_FEE` nas variáveis de ambiente (ex: `2.50`). Sem essa variável, o padrão é R$1,00.
+- Pra mudar o **texto do horário**, edite a constante `DELIVERY_TIME_NOTE` em `src/lib/constants.js`.
+
+## 21. Build de produção
 
 ```bash
 npm run build

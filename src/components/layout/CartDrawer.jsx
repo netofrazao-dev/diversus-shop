@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
+import { X, Minus, Plus, Trash2, ShoppingBag, Truck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCartStore } from '../../store/cartStore';
+import { PLACEHOLDER_IMAGE, DELIVERY_FEE, DELIVERY_TIME_NOTE } from '../../lib/constants';
 import Button from '../ui/Button';
 
 const formatPrice = (value) =>
@@ -21,7 +22,7 @@ export default function CartDrawer() {
     getComboDiscount,
   } = useCartStore();
 
-  const total = getTotalPrice();
+  const total = getTotalPrice() + DELIVERY_FEE;
   const subtotal = getSubtotal();
   const comboDiscount = getComboDiscount();
 
@@ -95,7 +96,7 @@ export default function CartDrawer() {
                     className="flex gap-3 bg-white border-3 border-black rounded-2xl p-3 shadow-cartoon-sm"
                   >
                     <img
-                      src={item.image_url || '/placeholder-product.png'}
+                      src={item.image_url || PLACEHOLDER_IMAGE}
                       alt={item.name}
                       className="w-16 h-16 rounded-xl border-2 border-black object-cover flex-shrink-0"
                     />
@@ -155,12 +156,19 @@ export default function CartDrawer() {
                     <span className="font-semibold text-green-700">-{formatPrice(comboDiscount)}</span>
                   </div>
                 )}
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-black/60">Taxa de entrega</span>
+                  <span className="text-black/60">{formatPrice(DELIVERY_FEE)}</span>
+                </div>
                 <div className="flex items-center justify-between">
                   <span className="font-display font-semibold text-lg">Total</span>
                   <span className="font-display font-bold text-2xl text-primary">
                     {formatPrice(total)}
                   </span>
                 </div>
+                <p className="flex items-center gap-1.5 text-xs text-black/50 -mt-1">
+                  <Truck size={13} /> {DELIVERY_TIME_NOTE}
+                </p>
                 <Button
                   variant="primary"
                   size="lg"

@@ -4,6 +4,7 @@ import {
   Plus, Trash2, Edit2, Upload, X, Star, EyeOff, Eye, Tag, Sparkles, Layers,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
+import { PLACEHOLDER_IMAGE } from '../../lib/constants';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 
@@ -694,7 +695,7 @@ export default function AdminProducts() {
             }`}
           >
             <img
-              src={product.image_url || '/placeholder-product.png'}
+              src={product.image_url || PLACEHOLDER_IMAGE}
               alt={product.name}
               className="w-16 h-16 rounded-xl border-2 border-black object-cover flex-shrink-0"
             />

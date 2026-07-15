@@ -6,6 +6,7 @@ import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import RestockRequestModal from './RestockRequestModal';
 import { getEffectivePrice } from '../../hooks/useProducts';
+import { PLACEHOLDER_IMAGE } from '../../lib/constants';
 
 /**
  * ProductCard — Card de produto do DIVERSUS SHOP
@@ -59,7 +60,7 @@ export default function ProductCard({ product, onAddToCart }) {
       {/* Imagem */}
       <Link to={`/produto/${id}`} className="block relative aspect-square overflow-hidden bg-primary-50 border-b-3 border-black">
         <img
-          src={imageUrl || '/placeholder-product.png'}
+          src={imageUrl || PLACEHOLDER_IMAGE}
           alt={name}
           className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 ${isSoldOut ? 'grayscale opacity-70' : ''}`}
           loading="lazy"

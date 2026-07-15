@@ -9,8 +9,10 @@ const formatPrice = (value) =>
  * Monta a mensagem de texto do pedido para enviar via WhatsApp.
  * customer: { name, phone, email, cep, street, number, complement, neighborhood, city, state }
  * items: [{ name, price, quantity }]
+ * total: valor final já incluindo a taxa de entrega
+ * deliveryFee: valor da taxa de entrega (opcional, só pra exibir a linha discriminada)
  */
-export function buildOrderMessage(customer, items, total) {
+export function buildOrderMessage(customer, items, total, deliveryFee) {
   const lines = [];
 
   lines.push('🛍️ *NOVO PEDIDO — DIVERSUS SHOP*');
@@ -34,6 +36,9 @@ export function buildOrderMessage(customer, items, total) {
     );
   });
   lines.push('');
+  if (deliveryFee) {
+    lines.push(`Taxa de entrega: ${formatPrice(deliveryFee)}`);
+  }
   lines.push(`*Total: ${formatPrice(total)}*`);
 
   return lines.join('\n');
@@ -43,8 +48,8 @@ export function buildOrderMessage(customer, items, total) {
  * Abre o WhatsApp (wa.me) com a mensagem do pedido já preenchida.
  * storePhone deve estar no formato internacional sem símbolos, ex: 5591999999999
  */
-export function openWhatsAppOrder(storePhone, customer, items, total) {
-  const message = buildOrderMessage(customer, items, total);
+export function openWhatsAppOrder(storePhone, customer, items, total, deliveryFee) {
+  const message = buildOrderMessage(customer, items, total, deliveryFee);
   const url = `https://wa.me/${storePhone}?text=${encodeURIComponent(message)}`;
   window.open(url, '_blank', 'noopener,noreferrer');
 }

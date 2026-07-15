@@ -17,6 +17,7 @@ import ProductCard from '../components/product/ProductCard';
 import InstagramCTA from '../components/layout/InstagramCTA';
 import ShareButton from '../components/product/ShareButton';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { PLACEHOLDER_IMAGE } from '../lib/constants';
 
 const formatPrice = (value) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -131,7 +132,7 @@ export default function ProductDetail() {
               </div>
             )}
             <img
-              src={gallery[activeImage] || '/placeholder-product.png'}
+              src={gallery[activeImage] || PLACEHOLDER_IMAGE}
               alt={product.name}
               className={`w-full h-full object-cover ${product.is_sold_out ? 'grayscale opacity-70' : ''}`}
             />
@@ -314,13 +315,13 @@ export default function ProductDetail() {
                 >
                   <div className="flex items-center gap-3">
                     <img
-                      src={product.image_url || '/placeholder-product.png'}
+                      src={product.image_url || PLACEHOLDER_IMAGE}
                       alt={product.name}
                       className="w-14 h-14 rounded-xl border-2 border-black object-cover"
                     />
                     <span className="font-display font-bold text-xl text-black/30">+</span>
                     <img
-                      src={comboProduct.image_url || '/placeholder-product.png'}
+                      src={comboProduct.image_url || PLACEHOLDER_IMAGE}
                       alt={comboProduct.name}
                       className="w-14 h-14 rounded-xl border-2 border-black object-cover"
                     />

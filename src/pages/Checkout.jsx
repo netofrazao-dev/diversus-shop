@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MapPin, User, Phone, Mail, Home, Hash, CheckCircle2 } from 'lucide-react';
+import { MapPin, User, Phone, Mail, Home, Hash, CheckCircle2, Truck } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import { openWhatsAppOrder } from '../lib/whatsapp';
 import { supabase } from '../lib/supabaseClient';
 import { isPixConfigured } from '../lib/pix';
+import { DELIVERY_FEE, DELIVERY_TIME_NOTE } from '../lib/constants';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import PixPayment from '../components/product/PixPayment';
@@ -36,7 +37,7 @@ export default function Checkout() {
   // mostramos a tela de pagamento antes de voltar pra loja.
   const [completedOrder, setCompletedOrder] = useState(null); // { amount, shortId }
 
-  const total = getTotalPrice();
+  const total = getTotalPrice() + DELIVERY_FEE;
   const subtotal = getSubtotal();
   const comboDiscount = getComboDiscount();
 
@@ -96,7 +97,7 @@ export default function Checkout() {
       if (itemsError) throw itemsError;
 
       // 3. Abre o WhatsApp com o pedido formatado
-      openWhatsAppOrder(STORE_WHATSAPP, form, items, total);
+      openWhatsAppOrder(STORE_WHATSAPP, form, items, total, DELIVERY_FEE);
 
       // 4. Limpa o carrinho
       clearCart();
@@ -264,12 +265,19 @@ export default function Checkout() {
                 </div>
               </>
             )}
+            <div className="flex justify-between text-sm text-black/60">
+              <span>Taxa de entrega</span>
+              <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(DELIVERY_FEE)}</span>
+            </div>
             <div className="flex justify-between items-center">
               <span className="font-display font-semibold">Total</span>
               <span className="font-display font-bold text-2xl text-primary">
                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)}
               </span>
             </div>
+            <p className="flex items-center gap-1.5 text-xs text-black/50">
+              <Truck size={13} /> {DELIVERY_TIME_NOTE}
+            </p>
           </div>
 
           <div className="flex flex-col gap-1">

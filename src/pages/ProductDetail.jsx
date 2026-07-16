@@ -41,8 +41,13 @@ export default function ProductDetail() {
   useDocumentTitle(product ? `${product.name} — DIVERSUS SHOP` : undefined);
 
   const hasOptions = optionGroups && optionGroups.length > 0;
-  const allOptionsSelected =
-    !hasOptions || optionGroups.every((group) => selectedOptions[group.id]);
+
+  // Só exige seleção nos grupos que realmente têm alguma opção disponível
+  // (protege contra um grupo vazio/todo esgotado travar a compra pra sempre)
+  const requiredGroups = hasOptions
+    ? optionGroups.filter((g) => g.product_option_values?.some((v) => !v.is_sold_out))
+    : [];
+  const allOptionsSelected = requiredGroups.every((group) => selectedOptions[group.id]);
 
   const variant = useMemo(() => {
     if (!hasOptions) return null;
@@ -101,7 +106,23 @@ export default function ProductDetail() {
 
   const handleSelectOption = (group, value) => {
     if (value.is_sold_out) return;
-    setSelectedOptions((prev) => ({ ...prev, [group.id]: value }));
+    const isCurrentlySelected = selectedOptions[group.id]?.id === value.id;
+
+    setSelectedOptions((prev) => {
+      const next = { ...prev };
+      if (isCurrentlySelected) {
+        delete next[group.id]; // clicar de novo na mesma opção desmarca ela
+      } else {
+        next[group.id] = value;
+      }
+      return next;
+    });
+
+    // Se essa opção tem uma foto vinculada, troca a imagem em destaque
+    if (!isCurrentlySelected && value.image_url) {
+      const photoIndex = gallery.indexOf(value.image_url);
+      if (photoIndex !== -1) setActiveImage(photoIndex);
+    }
   };
 
   const finalUnitPrice = effectivePrice + (variant?.priceAdjustment || 0);

@@ -90,7 +90,8 @@ export default function AdminProducts() {
       : product.image_url
       ? [product.image_url]
       : [];
-    setPhotos(existingUrls.map((url, i) => ({ key: `existing-${i}-${url}`, url, file: null })));
+    const photoEntries = existingUrls.map((url, i) => ({ key: `existing-${i}-${url}`, url }));
+    setPhotos(photoEntries.map(({ key, url }) => ({ key, url, file: null })));
 
     setShowForm(true);
     setLoadingRelations(true);
@@ -127,6 +128,9 @@ export default function AdminProducts() {
             value: v.value,
             price_adjustment: v.price_adjustment,
             is_sold_out: v.is_sold_out,
+            linkedPhotoKey: v.image_url
+              ? photoEntries.find((p) => p.url === v.image_url)?.key || null
+              : null,
           })),
       }))
     );
@@ -216,7 +220,7 @@ export default function AdminProducts() {
               ...g,
               values: [
                 ...g.values,
-                { key: crypto.randomUUID(), value: '', price_adjustment: 0, is_sold_out: false },
+                { key: crypto.randomUUID(), value: '', price_adjustment: 0, is_sold_out: false, linkedPhotoKey: null },
               ],
             }
           : g
@@ -313,13 +317,19 @@ export default function AdminProducts() {
         const validValues = group.values.filter((v) => v.value.trim());
         if (validValues.length > 0) {
           await supabase.from('product_option_values').insert(
-            validValues.map((v, vi) => ({
-              group_id: groupRow.id,
-              value: v.value,
-              price_adjustment: parseFloat(v.price_adjustment) || 0,
-              is_sold_out: v.is_sold_out,
-              display_order: vi,
-            }))
+            validValues.map((v, vi) => {
+              const photoIndex = v.linkedPhotoKey
+                ? photos.findIndex((p) => p.key === v.linkedPhotoKey)
+                : -1;
+              return {
+                group_id: groupRow.id,
+                value: v.value,
+                price_adjustment: parseFloat(v.price_adjustment) || 0,
+                is_sold_out: v.is_sold_out,
+                image_url: photoIndex !== -1 ? imageUrls[photoIndex] || null : null,
+                display_order: vi,
+              };
+            })
           );
         }
       }
@@ -547,6 +557,11 @@ export default function AdminProducts() {
                 Novo grupo
               </Button>
             </div>
+            <p className="text-xs text-black/50 -mt-2">
+              Em cada valor, você pode escolher uma "foto vinculada" — o número corresponde à
+              ordem das fotos na galeria lá em cima. Ao selecionar essa opção, o cliente vê
+              automaticamente aquela foto em destaque na página do produto.
+            </p>
 
             {optionGroups.length === 0 && (
               <p className="text-sm text-black/50">
@@ -586,6 +601,28 @@ export default function AdminProducts() {
                         className="border-2 border-black rounded-lg px-3 py-1.5 text-sm w-24"
                         title="Ajuste de preço (pode ser negativo)"
                       />
+                      <select
+                        value={val.linkedPhotoKey || ''}
+                        onChange={(e) =>
+                          updateOptionValue(group.key, val.key, { linkedPhotoKey: e.target.value || null })
+                        }
+                        className="border-2 border-black rounded-lg px-2 py-1.5 text-xs w-32"
+                        title="Foto que aparece em destaque quando o cliente escolhe essa opção"
+                      >
+                        <option value="">Sem foto vinculada</option>
+                        {photos.map((photo, i) => (
+                          <option key={photo.key} value={photo.key}>
+                            Foto {i + 1}
+                          </option>
+                        ))}
+                      </select>
+                      {val.linkedPhotoKey && (
+                        <img
+                          src={photos.find((p) => p.key === val.linkedPhotoKey)?.url}
+                          alt=""
+                          className="w-8 h-8 rounded border-2 border-black object-cover shrink-0"
+                        />
+                      )}
                       <label className="flex items-center gap-1 text-xs font-semibold">
                         <input
                           type="checkbox"

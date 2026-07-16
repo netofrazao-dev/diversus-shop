@@ -121,6 +121,7 @@ create table if not exists public.product_option_values (
   value text not null,
   price_adjustment numeric(10,2) not null default 0,
   is_sold_out boolean not null default false,
+  image_url text, -- foto do produto vinculada a essa opção (troca a imagem em destaque na PDP)
   display_order integer not null default 0,
   created_at timestamptz not null default now()
 );

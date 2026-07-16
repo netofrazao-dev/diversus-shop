@@ -42,10 +42,13 @@ export default function ProductDetail() {
 
   const hasOptions = optionGroups && optionGroups.length > 0;
 
-  // Só exige seleção nos grupos que realmente têm alguma opção disponível
-  // (protege contra um grupo vazio/todo esgotado travar a compra pra sempre)
+  // Só exige seleção nos grupos marcados como obrigatórios E que realmente
+  // têm alguma opção disponível (protege contra grupo vazio/esgotado travar
+  // a compra pra sempre).
   const requiredGroups = hasOptions
-    ? optionGroups.filter((g) => g.product_option_values?.some((v) => !v.is_sold_out))
+    ? optionGroups.filter(
+        (g) => g.is_required !== false && g.product_option_values?.some((v) => !v.is_sold_out)
+      )
     : [];
   const allOptionsSelected = requiredGroups.every((group) => selectedOptions[group.id]);
 
@@ -217,7 +220,12 @@ export default function ProductDetail() {
           {hasOptions &&
             optionGroups.map((group) => (
               <div key={group.id} className="flex flex-col gap-2">
-                <span className="font-display font-semibold text-sm">{group.name}</span>
+                <span className="font-display font-semibold text-sm">
+                  {group.name}
+                  {group.is_required === false && (
+                    <span className="text-black/40 font-normal"> (opcional)</span>
+                  )}
+                </span>
                 <div className="flex flex-wrap gap-2">
                   {group.product_option_values.map((value) => {
                     const isSelected = selectedOptions[group.id]?.id === value.id;

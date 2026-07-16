@@ -121,6 +121,7 @@ export default function AdminProducts() {
       (groupsData || []).map((g) => ({
         key: g.id,
         name: g.name,
+        is_required: g.is_required !== false,
         values: (g.product_option_values || [])
           .sort((a, b) => a.display_order - b.display_order)
           .map((v) => ({
@@ -206,10 +207,15 @@ export default function AdminProducts() {
 
   // ---- Variações ----
   const addOptionGroup = () => {
-    setOptionGroups((prev) => [...prev, { key: crypto.randomUUID(), name: '', values: [] }]);
+    setOptionGroups((prev) => [...prev, { key: crypto.randomUUID(), name: '', is_required: true, values: [] }]);
   };
   const updateOptionGroupName = (key, name) => {
     setOptionGroups((prev) => prev.map((g) => (g.key === key ? { ...g, name } : g)));
+  };
+  const toggleOptionGroupRequired = (key) => {
+    setOptionGroups((prev) =>
+      prev.map((g) => (g.key === key ? { ...g, is_required: !g.is_required } : g))
+    );
   };
   const removeOptionGroup = (key) => setOptionGroups((prev) => prev.filter((g) => g.key !== key));
   const addOptionValue = (groupKey) => {
@@ -309,7 +315,7 @@ export default function AdminProducts() {
         const group = validGroups[i];
         const { data: groupRow, error: groupError } = await supabase
           .from('product_option_groups')
-          .insert({ product_id: productId, name: group.name, display_order: i })
+          .insert({ product_id: productId, name: group.name, is_required: group.is_required !== false, display_order: i })
           .select()
           .single();
         if (groupError) throw groupError;
@@ -582,6 +588,16 @@ export default function AdminProducts() {
                     <Trash2 size={16} />
                   </button>
                 </div>
+
+                <label className="flex items-center gap-2 text-xs font-semibold">
+                  <input
+                    type="checkbox"
+                    checked={group.is_required !== false}
+                    onChange={() => toggleOptionGroupRequired(group.key)}
+                    className="accent-primary"
+                  />
+                  Obrigatório escolher esta opção antes de comprar
+                </label>
 
                 <div className="flex flex-col gap-2">
                   {group.values.map((val) => (

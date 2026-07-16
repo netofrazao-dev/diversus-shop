@@ -111,6 +111,7 @@ create table if not exists public.product_option_groups (
   id uuid primary key default gen_random_uuid(),
   product_id uuid not null references public.products(id) on delete cascade,
   name text not null,
+  is_required boolean not null default true,
   display_order integer not null default 0,
   created_at timestamptz not null default now()
 );

@@ -61,6 +61,8 @@ create table if not exists public.orders (
   city text,
   state text,
   total numeric(10,2) not null default 0,
+  coupon_code text,
+  coupon_discount numeric(10,2),
   status text not null default 'pendente'
     check (status in ('pendente', 'confirmado', 'enviado', 'entregue', 'cancelado')),
   notes text,
@@ -166,7 +168,23 @@ create table if not exists public.customer_suggestions (
 );
 
 -- =============================================================
--- 11. TABELA: admins (whitelist de administradores)
+-- 12. TABELA: coupons — cupons de desconto
+-- =============================================================
+create table if not exists public.coupons (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique,
+  discount_type text not null check (discount_type in ('percent', 'amount')),
+  discount_value numeric(10,2) not null check (discount_value > 0),
+  is_active boolean not null default true,
+  expires_at timestamptz,
+  min_order_value numeric(10,2),
+  usage_limit integer,
+  times_used integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+-- =============================================================
+-- 13. TABELA: admins (whitelist de administradores)
 -- Usada para diferenciar admin de cliente comum via auth.uid()
 -- =============================================================
 create table if not exists public.admins (
@@ -223,6 +241,85 @@ create trigger trg_decrement_stock
   execute function public.decrement_product_stock();
 
 -- =============================================================
+-- FUNÇÃO + TRIGGER: contador de uso de cupom
+-- =============================================================
+create or replace function public.increment_coupon_usage()
+returns trigger as $$
+begin
+  if new.coupon_code is not null then
+    update public.coupons
+    set times_used = times_used + 1
+    where code = new.coupon_code;
+  end if;
+  return new;
+end;
+$$ language plpgsql security definer
+set search_path = public;
+
+drop trigger if exists trg_increment_coupon_usage on public.orders;
+create trigger trg_increment_coupon_usage
+  after insert on public.orders
+  for each row
+  execute function public.increment_coupon_usage();
+
+-- =============================================================
+-- FUNÇÃO: validate_coupon — valida um cupom digitado no checkout
+-- sem expor a lista completa de cupons existentes (RLS bloqueia
+-- select direto na tabela; só essa função, security definer,
+-- consegue "ver" os cupons pra confirmar se o código é válido).
+-- =============================================================
+create or replace function public.validate_coupon(p_code text, p_order_total numeric default null)
+returns table(
+  id uuid,
+  code text,
+  discount_type text,
+  discount_value numeric,
+  min_order_value numeric,
+  message text
+)
+language plpgsql
+security definer
+stable
+set search_path = public
+as $$
+declare
+  v_coupon record;
+begin
+  select * into v_coupon from public.coupons c where upper(c.code) = upper(p_code) limit 1;
+
+  if v_coupon is null then
+    return query select null::uuid, null::text, null::text, null::numeric, null::numeric, 'Cupom não encontrado'::text;
+    return;
+  end if;
+
+  if not v_coupon.is_active then
+    return query select null::uuid, null::text, null::text, null::numeric, null::numeric, 'Este cupom não está mais ativo'::text;
+    return;
+  end if;
+
+  if v_coupon.expires_at is not null and v_coupon.expires_at < now() then
+    return query select null::uuid, null::text, null::text, null::numeric, null::numeric, 'Este cupom expirou'::text;
+    return;
+  end if;
+
+  if v_coupon.usage_limit is not null and v_coupon.times_used >= v_coupon.usage_limit then
+    return query select null::uuid, null::text, null::text, null::numeric, null::numeric, 'Este cupom já atingiu o limite de usos'::text;
+    return;
+  end if;
+
+  if v_coupon.min_order_value is not null and p_order_total is not null and p_order_total < v_coupon.min_order_value then
+    return query select null::uuid, null::text, null::text, null::numeric, v_coupon.min_order_value,
+      ('Pedido mínimo de R$ ' || to_char(v_coupon.min_order_value, 'FM999999990.00') || ' para usar este cupom')::text;
+    return;
+  end if;
+
+  return query select v_coupon.id, v_coupon.code, v_coupon.discount_type, v_coupon.discount_value, v_coupon.min_order_value, 'ok'::text;
+end;
+$$;
+
+grant execute on function public.validate_coupon(text, numeric) to anon, authenticated;
+
+-- =============================================================
 -- FUNÇÃO AUXILIAR: verifica se o usuário logado é admin
 -- =============================================================
 create or replace function public.is_admin()
@@ -247,6 +344,7 @@ alter table public.product_option_values enable row level security;
 alter table public.product_recommendations enable row level security;
 alter table public.product_combos enable row level security;
 alter table public.customer_suggestions enable row level security;
+alter table public.coupons enable row level security;
 
 -- --- categories: leitura pública, escrita apenas admin ---
 create policy "categories_public_read"
@@ -356,6 +454,13 @@ create policy "combos_admin_delete" on public.product_combos for delete using (p
 create policy "suggestions_public_insert" on public.customer_suggestions for insert with check (true);
 create policy "suggestions_admin_read" on public.customer_suggestions for select using (public.is_admin());
 create policy "suggestions_admin_delete" on public.customer_suggestions for delete using (public.is_admin());
+
+-- --- cupons: só admin acessa a tabela diretamente. A validação pública
+--     passa pela função validate_coupon() abaixo (não expõe a lista toda) ---
+create policy "coupons_admin_all"
+  on public.coupons for all
+  using (public.is_admin())
+  with check (public.is_admin());
 
 -- =============================================================
 -- STORAGE: bucket para imagens de produtos

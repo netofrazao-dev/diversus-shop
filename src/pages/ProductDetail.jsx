@@ -107,7 +107,7 @@ export default function ProductDetail() {
   const finalUnitPrice = effectivePrice + (variant?.priceAdjustment || 0);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 pb-28 sm:pb-10">
       <Link
         to="/catalogo"
         className="inline-flex items-center gap-1 font-display font-semibold text-sm mb-6 hover:underline"
@@ -374,6 +374,27 @@ export default function ProductDetail() {
       <div className="mt-14 max-w-md mx-auto">
         <InstagramCTA variant="compact" />
       </div>
+
+      {/* Barra fixa mobile — some no desktop, some quando o produto está esgotado
+          e já mostramos o "Avise-me" grande ali em cima */}
+      {!product.is_sold_out && (
+        <div className="sm:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t-3 border-black px-4 py-3 flex items-center gap-3 shadow-[0_-4px_0_0_rgba(0,0,0,0.05)]">
+          <div className="min-w-0 flex-1">
+            <p className="font-display font-semibold text-xs text-black/60 truncate">{product.name}</p>
+            <p className="font-display font-bold text-lg text-primary">{formatPrice(finalUnitPrice)}</p>
+          </div>
+          <Button
+            variant="primary"
+            size="md"
+            icon={ShoppingCart}
+            disabled={hasOptions && !allOptionsSelected}
+            onClick={handleAddToCart}
+            className="shrink-0"
+          >
+            {hasOptions && !allOptionsSelected ? 'Escolha as opções' : 'Comprar'}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

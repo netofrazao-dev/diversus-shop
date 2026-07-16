@@ -160,6 +160,11 @@ export default function AdminOrders() {
                   {order.order_items?.length || 0} item(ns) —{' '}
                   <span className="font-bold text-primary">{formatPrice(order.total)}</span>
                 </p>
+                {order.coupon_code && (
+                  <p className="text-xs mt-1 font-display font-semibold text-green-700">
+                    🎟️ Cupom {order.coupon_code} (-{formatPrice(order.coupon_discount)})
+                  </p>
+                )}
               </div>
 
               <select

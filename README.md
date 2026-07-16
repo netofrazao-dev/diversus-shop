@@ -115,7 +115,13 @@ O checkout e o carrinho agora somam uma **taxa de entrega fixa de R$1,00** ao to
 - Pra mudar o **valor** da taxa, defina `VITE_DELIVERY_FEE` nas variáveis de ambiente (ex: `2.50`). Sem essa variável, o padrão é R$1,00.
 - Pra mudar o **texto do horário**, edite a constante `DELIVERY_TIME_NOTE` em `src/lib/constants.js`.
 
-## 21. Build de produção
+## 22. Cupom de desconto, botão fixo no celular e compressão de imagem
+
+- **Cupom de desconto**: página nova `/admin/cupons` — crie códigos com desconto em % ou R$ fixo, pedido mínimo opcional, limite de usos opcional e data de expiração opcional. O cliente digita o código no checkout, o desconto é validado e aplicado na hora. O uso é contado automaticamente a cada pedido.
+- **Botão fixo de comprar no celular**: ao rolar a página de um produto (fora a hora que ele está esgotado), aparece uma barra fixa no rodapé da tela com nome, preço e botão de comprar — pra não perder a ação de compra em telas compridas com combos/recomendações.
+- **Compressão de imagem**: toda foto de produto enviada pelo admin agora é comprimida automaticamente no navegador antes do upload (redimensiona pra no máximo 1600px no lado maior e converte pra JPEG otimizado). Isso deixa o site bem mais rápido pros clientes, principalmente em conexões mais fracas — e o admin não precisa fazer nada diferente, é automático.
+
+## 23. Build de produção
 
 ```bash
 npm run build
@@ -145,20 +151,53 @@ No painel Admin (**Produtos**), marque a caixinha **"Esgotado"** ao criar/editar
 - O botão de compra vire **"Avise-me quando chegar"**
 - Ao clicar, o cliente pode (opcionalmente) deixar nome e contato — isso fica salvo e visível na aba **Desejos** do Admin, agrupado por produto, mostrando quantas pessoas querem cada item de volta.
 
+## 10. Categorias, promoções, produtos ocultos, recomendações, combos e variações
+
+- **Categorias** (`/admin/categorias`): crie, edite e exclua categorias direto pelo admin.
+- **Ocultar produto**: desmarque "Visível na loja" no formulário — o produto some da loja sem ser excluído.
+- **Promoção**: preencha "Preço promocional" (com data de início/fim opcional) — a loja mostra o preço com desconto automaticamente dentro da janela escolhida.
+- **Variações** (cor, tamanho, sabor...): crie grupos de opção com valores, cada um podendo ajustar o preço e ser marcado esgotado individualmente.
+- **Recomendações**: escolha manualmente quais produtos aparecem em "Você também pode gostar" — e se não escolher nada, o site sugere sozinho (mesma categoria, depois destaques).
+- **Combos**: desconto automático quando dois produtos específicos estão juntos no carrinho.
+
+## 11. Caixinha de sugestões, Instagram, baixa de estoque, dashboard e LGPD
+
+- **Sugestão de produto**: formulário no rodapé e na Home — respostas visíveis em `/admin/sugestoes`.
+- **Instagram**: banners e links reais (`@diversus__shop.acessorios`) na Home, PDP e rodapé.
+- **Estoque automático**: toda venda desconta o estoque via trigger no banco; ao chegar a zero, marca esgotado sozinho.
+- **Dashboard**: a tela de Pedidos mostra vendido hoje, pedidos pendentes e o produto mais vendido dos últimos 7 dias.
+- **Política de Privacidade** (`/privacidade`): LGPD, linkada no rodapé; checkout exige aceite via checkbox.
+
+## 12. Busca, Pix, taxa de entrega, compartilhamento, SEO, anti-spam e cupons
+
+- **Busca**: ícone de lupa na Navbar, filtra produtos por nome.
+- **Pix com QR Code**: se `VITE_STORE_PIX_KEY` estiver configurada, o checkout mostra QR Code + código Pix "copia e cola" depois do pedido confirmado.
+- **Taxa de entrega**: R$1,00 fixo (configurável via `VITE_DELIVERY_FEE`) somado no carrinho/checkout, com aviso de horário de entrega.
+- **Compartilhar produto**: botão na PDP — abre o menu nativo de compartilhar no celular, ou copia o link no computador.
+- **SEO / preview ao compartilhar**: meta tags Open Graph no `index.html` (troque `public/og-image.png` pela sua arte quando quiser).
+- **Anti-spam**: campo honeypot invisível nos formulários públicos (checkout, avise-me, sugestão).
+- **Cupons de desconto** (`/admin/cupons`): crie códigos com desconto em % ou R$, pedido mínimo, limite de usos e validade. O cliente aplica no checkout; a validação passa por uma função seV do banco, então os códigos não ficam expostos publicamente.
+- **Botão fixo no celular**: barra fixa no rodapé da PDP mostrando preço + botão de comprar.
+- **Compressão de imagem**: fotos enviadas no admin são comprimidas automaticamente antes do upload.
+
 ## Estrutura de pastas
 
 ```
 src/
 ├── components/
-│   ├── ui/         # Button, Input, Badge
-│   ├── layout/      # Navbar, Footer, CartDrawer
-│   └── product/       # ProductCard, ProductSection
+│   ├── ui/          # Button, Input, Badge, HoneypotField
+│   ├── layout/       # Navbar, Footer, CartDrawer, InstagramCTA
+│   └── product/       # ProductCard, ProductSection, RestockRequestModal,
+│                       # SuggestionModal, ShareButton, PixPayment
 ├── pages/
-│   ├── Home.jsx, Catalog.jsx, ProductDetail.jsx, Checkout.jsx
-│   └── admin/       # AdminLogin, AdminDashboard, AdminOrders, AdminProducts
+│   ├── Home.jsx, Catalog.jsx, ProductDetail.jsx, Checkout.jsx, PrivacyPolicy.jsx
+│   └── admin/       # AdminLogin, AdminDashboard, AdminOrders, AdminProducts,
+│                     # AdminCategories, AdminCoupons, AdminRestockRequests, AdminSuggestions
 ├── store/            # cartStore (Zustand)
-├── lib/              # supabaseClient, viaCep, whatsapp
-├── hooks/             # useProducts (React Query), useAuth
+├── lib/              # supabaseClient, viaCep, whatsapp, pix, coupons,
+│                      # imageCompression, constants
+├── hooks/             # useProducts (React Query), useAuth, useDocumentTitle
 ├── routes/            # AppRoutes, ProtectedRoute
 └── App.jsx, main.jsx, index.css
 ```
+

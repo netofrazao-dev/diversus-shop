@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MapPin, User, Phone, Mail, Home, Hash, CheckCircle2, Truck } from 'lucide-react';
+import { MapPin, User, Phone, Mail, Home, Hash, CheckCircle2, Truck, Tag, X, Check } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import { openWhatsAppOrder } from '../lib/whatsapp';
 import { supabase } from '../lib/supabaseClient';
 import { isPixConfigured } from '../lib/pix';
+import { validateCoupon } from '../lib/coupons';
 import { DELIVERY_FEE, DELIVERY_TIME_NOTE } from '../lib/constants';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
@@ -24,6 +25,9 @@ const initialForm = {
   neighborhood: '',
 };
 
+const formatPrice = (value) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+
 export default function Checkout() {
   const navigate = useNavigate();
   const { items, getTotalPrice, getSubtotal, getComboDiscount, clearCart } = useCartStore();
@@ -33,17 +37,46 @@ export default function Checkout() {
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [honeypot, setHoneypot] = useState('');
 
+  // Cupom de desconto
+  const [couponInput, setCouponInput] = useState('');
+  const [couponApplied, setCouponApplied] = useState(null); // { code, discount }
+  const [couponError, setCouponError] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+
   // Depois que o pedido é criado, se a loja tiver Pix configurado,
   // mostramos a tela de pagamento antes de voltar pra loja.
   const [completedOrder, setCompletedOrder] = useState(null); // { amount, shortId }
 
-  const total = getTotalPrice() + DELIVERY_FEE;
   const subtotal = getSubtotal();
   const comboDiscount = getComboDiscount();
+  const afterCombo = getTotalPrice(); // subtotal já com desconto de combo aplicado
+  const couponDiscount = couponApplied?.discount || 0;
+  const total = Math.max(0, afterCombo - couponDiscount) + DELIVERY_FEE;
 
   const handleChange = (field) => (e) => {
     setForm((f) => ({ ...f, [field]: e.target.value }));
     setErrors((err) => ({ ...err, [field]: null }));
+  };
+
+  const handleApplyCoupon = async () => {
+    setCouponError('');
+    setCouponLoading(true);
+    const result = await validateCoupon(couponInput, afterCombo);
+    setCouponLoading(false);
+
+    if (result.error) {
+      setCouponError(result.error);
+      setCouponApplied(null);
+      return;
+    }
+
+    setCouponApplied({ code: result.coupon.code, discount: result.discount });
+  };
+
+  const handleRemoveCoupon = () => {
+    setCouponApplied(null);
+    setCouponInput('');
+    setCouponError('');
   };
 
   const validate = () => {
@@ -78,6 +111,8 @@ export default function Checkout() {
           complement: form.complement || null,
           neighborhood: form.neighborhood,
           total,
+          coupon_code: couponApplied?.code || null,
+          coupon_discount: couponApplied?.discount || null,
         })
         .select()
         .single();
@@ -97,7 +132,10 @@ export default function Checkout() {
       if (itemsError) throw itemsError;
 
       // 3. Abre o WhatsApp com o pedido formatado
-      openWhatsAppOrder(STORE_WHATSAPP, form, items, total, DELIVERY_FEE);
+      openWhatsAppOrder(STORE_WHATSAPP, form, items, total, {
+        deliveryFee: DELIVERY_FEE,
+        coupon: couponApplied,
+      });
 
       // 4. Limpa o carrinho
       clearCart();
@@ -225,6 +263,52 @@ export default function Checkout() {
             />
           </div>
 
+          {/* Cupom de desconto */}
+          <div className="bg-white border-3 border-black rounded-2xl shadow-cartoon p-5 sm:p-6 flex flex-col gap-3">
+            <h2 className="font-display font-bold text-lg flex items-center gap-2">
+              <Tag size={20} /> Cupom de desconto
+            </h2>
+
+            {couponApplied ? (
+              <div className="flex items-center justify-between bg-accent-green/20 border-2 border-black rounded-xl px-4 py-3">
+                <span className="flex items-center gap-2 font-display font-semibold text-sm">
+                  <Check size={16} className="text-green-700" />
+                  {couponApplied.code} aplicado (-{formatPrice(couponApplied.discount)})
+                </span>
+                <button
+                  type="button"
+                  onClick={handleRemoveCoupon}
+                  className="text-red-600"
+                  aria-label="Remover cupom"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  value={couponInput}
+                  onChange={(e) => {
+                    setCouponInput(e.target.value);
+                    setCouponError('');
+                  }}
+                  placeholder="Digite o código"
+                  className="flex-1 border-3 border-black rounded-2xl px-4 py-2.5 font-body uppercase shadow-cartoon-sm focus:outline-none"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  isLoading={couponLoading}
+                  onClick={handleApplyCoupon}
+                  disabled={!couponInput.trim()}
+                >
+                  Aplicar
+                </Button>
+              </div>
+            )}
+            {couponError && <p className="text-red-600 font-semibold text-sm">{couponError}</p>}
+          </div>
+
           {errors.general && (
             <p className="text-red-600 font-semibold text-sm">{errors.general}</p>
           )}
@@ -243,12 +327,7 @@ export default function Checkout() {
                 <span className="text-black/70">
                   {item.quantity}x {item.name}
                 </span>
-                <span className="font-semibold">
-                  {new Intl.NumberFormat('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                  }).format(item.price * item.quantity)}
-                </span>
+                <span className="font-semibold">{formatPrice(item.price * item.quantity)}</span>
               </div>
             ))}
           </div>
@@ -257,22 +336,28 @@ export default function Checkout() {
               <>
                 <div className="flex justify-between text-sm text-black/60">
                   <span>Subtotal</span>
-                  <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(subtotal)}</span>
+                  <span>{formatPrice(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-sm font-semibold text-green-700">
                   <span>Desconto combo</span>
-                  <span>-{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(comboDiscount)}</span>
+                  <span>-{formatPrice(comboDiscount)}</span>
                 </div>
               </>
             )}
+            {couponDiscount > 0 && (
+              <div className="flex justify-between text-sm font-semibold text-green-700">
+                <span>Cupom {couponApplied.code}</span>
+                <span>-{formatPrice(couponDiscount)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-sm text-black/60">
               <span>Taxa de entrega</span>
-              <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(DELIVERY_FEE)}</span>
+              <span>{formatPrice(DELIVERY_FEE)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-display font-semibold">Total</span>
               <span className="font-display font-bold text-2xl text-primary">
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)}
+                {formatPrice(total)}
               </span>
             </div>
             <p className="flex items-center gap-1.5 text-xs text-black/50">

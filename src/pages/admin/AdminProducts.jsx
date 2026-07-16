@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { PLACEHOLDER_IMAGE } from '../../lib/constants';
+import { compressImage } from '../../lib/imageCompression';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 
@@ -160,9 +161,16 @@ export default function AdminProducts() {
     const urls = [];
     for (const photo of photos) {
       if (photo.file) {
-        const fileExt = photo.file.name.split('.').pop();
-        const fileName = `${crypto.randomUUID()}.${fileExt}`;
-        const { error } = await supabase.storage.from('product-images').upload(fileName, photo.file);
+        const compressed = await compressImage(photo.file);
+        const wasCompressed = compressed !== photo.file;
+        const fileName = wasCompressed
+          ? `${crypto.randomUUID()}.jpg`
+          : `${crypto.randomUUID()}.${photo.file.name.split('.').pop()}`;
+        const { error } = await supabase.storage
+          .from('product-images')
+          .upload(fileName, compressed, {
+            contentType: wasCompressed ? 'image/jpeg' : photo.file.type,
+          });
         if (error) throw error;
         const { data } = supabase.storage.from('product-images').getPublicUrl(fileName);
         urls.push(data.publicUrl);

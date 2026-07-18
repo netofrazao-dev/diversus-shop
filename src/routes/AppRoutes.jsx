@@ -9,6 +9,7 @@ import Catalog from '../pages/Catalog';
 import ProductDetail from '../pages/ProductDetail';
 import Checkout from '../pages/Checkout';
 import PrivacyPolicy from '../pages/PrivacyPolicy';
+import OrderTracking from '../pages/OrderTracking';
 
 // Admin — só é baixado quando alguém realmente acessa /admin/*, então
 // o cliente comum (que nunca entra no admin) não paga esse custo de
@@ -41,6 +42,7 @@ export default function AppRoutes() {
       <Route path="/produto/:id" element={<ProductDetail />} />
       <Route path="/checkout" element={<Checkout />} />
       <Route path="/privacidade" element={<PrivacyPolicy />} />
+      <Route path="/meu-pedido" element={<OrderTracking />} />
 
       {/* Admin — cada rota entra num <Suspense> próprio */}
       <Route

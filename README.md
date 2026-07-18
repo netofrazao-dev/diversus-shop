@@ -126,7 +126,12 @@ O checkout e o carrinho agora somam uma **taxa de entrega fixa de R$1,00** ao to
 - **Code splitting**: as páginas do Admin e a tela de pagamento Pix agora só são baixadas pelo navegador quando realmente acessadas — o cliente que só está comprando não baixa nenhum código do admin. Isso reduziu o pacote principal de ~711kb pra ~634kb, além de separar ~80kb em pedaços carregados sob demanda.
 - **Testes automatizados**: `npm test` roda os testes (usando Vitest). Já vem com um teste que trava especificamente o bug de bypass de variação obrigatória encontrado na varredura — se algum dia esse comportamento quebrar de novo (por exemplo, numa mudança futura no `ProductCard`), o teste falha imediatamente em vez de descobrirmos só quando um cliente reclamar.
 
-## 25. Build de produção
+## 26. Rastreamento de pedido e mais testes automatizados
+
+- **Consultar meu pedido** (`/meu-pedido`, linkado no rodapé): o cliente digita o telefone usado na compra e vê o status de todos os pedidos com aquele número — sem precisar te chamar no WhatsApp pra perguntar. A consulta passa por uma função segura no banco (`track_orders_by_phone`), que só retorna os pedidos daquele telefone específico, sem expor a tabela de pedidos inteira.
+- **Testes automatizados expandidos**: agora `npm test` cobre também o cálculo do carrinho (subtotal, desconto de combo, variações, `getComboDiscount` nunca ficando negativo) e o cálculo de preço promocional (`getEffectivePrice`) — a mesma função que já quebrou uma vez sem querer numa reescrita. Total: 22 testes.
+
+## 27. Build de produção
 
 ```bash
 npm run build

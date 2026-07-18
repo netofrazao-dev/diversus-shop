@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Instagram, MessageCircle, MessageSquareHeart } from 'lucide-react';
+import { Instagram, MessageCircle, MessageSquareHeart, Package } from 'lucide-react';
 import SuggestionModal from '../product/SuggestionModal';
 
 const INSTAGRAM_URL =
@@ -34,6 +34,9 @@ export default function Footer() {
             >
               <MessageSquareHeart size={14} /> Sugerir um produto
             </button>
+            <Link to="/meu-pedido" className="flex items-center gap-1.5 hover:text-secondary">
+              <Package size={14} /> Consultar meu pedido
+            </Link>
             <Link to="/admin/login" className="hover:text-secondary">Área do administrador</Link>
             <Link to="/privacidade" className="hover:text-secondary">Política de Privacidade</Link>
           </div>

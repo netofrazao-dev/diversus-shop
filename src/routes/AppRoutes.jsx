@@ -10,6 +10,7 @@ import AdminOrders from '../pages/admin/AdminOrders';
 import AdminProducts from '../pages/admin/AdminProducts';
 import AdminCategories from '../pages/admin/AdminCategories';
 import AdminCoupons from '../pages/admin/AdminCoupons';
+import AdminReviews from '../pages/admin/AdminReviews';
 import AdminRestockRequests from '../pages/admin/AdminRestockRequests';
 import AdminSuggestions from '../pages/admin/AdminSuggestions';
 import ProtectedRoute from './ProtectedRoute';
@@ -32,6 +33,7 @@ export default function AppRoutes() {
           <Route path="produtos" element={<AdminProducts />} />
           <Route path="categorias" element={<AdminCategories />} />
           <Route path="cupons" element={<AdminCoupons />} />
+          <Route path="avaliacoes" element={<AdminReviews />} />
           <Route path="desejos" element={<AdminRestockRequests />} />
           <Route path="sugestoes" element={<AdminSuggestions />} />
         </Route>

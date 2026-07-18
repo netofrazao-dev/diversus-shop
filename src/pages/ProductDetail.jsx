@@ -15,6 +15,7 @@ import Badge from '../components/ui/Badge';
 import RestockRequestModal from '../components/product/RestockRequestModal';
 import ProductCard from '../components/product/ProductCard';
 import InstagramCTA from '../components/layout/InstagramCTA';
+import ProductReviews from '../components/product/ProductReviews';
 import ShareButton from '../components/product/ShareButton';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { PLACEHOLDER_IMAGE } from '../lib/constants';
@@ -385,6 +386,9 @@ export default function ProductDetail() {
           </div>
         </section>
       )}
+
+      {/* Avaliações */}
+      <ProductReviews product={product} />
 
       {/* Você também pode gostar */}
       {recommendations?.length > 0 && (

@@ -4,12 +4,14 @@ import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import CartDrawer from './components/layout/CartDrawer';
 import AppRoutes from './routes/AppRoutes';
+import { useCouponCapture } from './hooks/useCouponCapture';
 
 const queryClient = new QueryClient();
 
 function Layout() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
+  useCouponCapture();
 
   return (
     <div className="min-h-screen flex flex-col bg-white font-body">

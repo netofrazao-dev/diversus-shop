@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MapPin, User, Phone, Mail, Home, Hash, CheckCircle2, Truck, Tag, X, Check } from 'lucide-react';
@@ -7,6 +7,7 @@ import { openWhatsAppOrder } from '../lib/whatsapp';
 import { supabase } from '../lib/supabaseClient';
 import { isPixConfigured } from '../lib/pix';
 import { validateCoupon } from '../lib/coupons';
+import { getPendingCoupon, clearPendingCoupon } from '../hooks/useCouponCapture';
 import { DELIVERY_FEE, DELIVERY_TIME_NOTE } from '../lib/constants';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
@@ -58,10 +59,10 @@ export default function Checkout() {
     setErrors((err) => ({ ...err, [field]: null }));
   };
 
-  const handleApplyCoupon = async () => {
+  const applyCoupon = async (codeToApply) => {
     setCouponError('');
     setCouponLoading(true);
-    const result = await validateCoupon(couponInput, afterCombo);
+    const result = await validateCoupon(codeToApply, afterCombo);
     setCouponLoading(false);
 
     if (result.error) {
@@ -72,6 +73,19 @@ export default function Checkout() {
 
     setCouponApplied({ code: result.coupon.code, discount: result.discount });
   };
+
+  const handleApplyCoupon = () => applyCoupon(couponInput);
+
+  // Se o cliente chegou por um link com ?cupom=CODIGO, aplica sozinho
+  useEffect(() => {
+    const pending = getPendingCoupon();
+    if (pending) {
+      setCouponInput(pending);
+      applyCoupon(pending);
+      clearPendingCoupon();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleRemoveCoupon = () => {
     setCouponApplied(null);

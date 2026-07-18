@@ -186,7 +186,22 @@ create table if not exists public.coupons (
 );
 
 -- =============================================================
--- 13. TABELA: admins (whitelist de administradores)
+-- 13. TABELA: product_reviews — avaliações com estrelas
+-- =============================================================
+create table if not exists public.product_reviews (
+  id uuid primary key default gen_random_uuid(),
+  product_id uuid not null references public.products(id) on delete cascade,
+  customer_name text not null,
+  rating integer not null check (rating between 1 and 5),
+  comment text,
+  is_visible boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_reviews_product on public.product_reviews(product_id);
+
+-- =============================================================
+-- 14. TABELA: admins (whitelist de administradores)
 -- Usada para diferenciar admin de cliente comum via auth.uid()
 -- =============================================================
 create table if not exists public.admins (
@@ -347,6 +362,7 @@ alter table public.product_recommendations enable row level security;
 alter table public.product_combos enable row level security;
 alter table public.customer_suggestions enable row level security;
 alter table public.coupons enable row level security;
+alter table public.product_reviews enable row level security;
 
 -- --- categories: leitura pública, escrita apenas admin ---
 create policy "categories_public_read"
@@ -463,6 +479,14 @@ create policy "coupons_admin_all"
   on public.coupons for all
   using (public.is_admin())
   with check (public.is_admin());
+
+-- --- avaliações: leitura pública só das visíveis, qualquer um pode enviar,
+--     admin lê todas (inclusive ocultas), atualiza e apaga ---
+create policy "reviews_public_read" on public.product_reviews for select using (is_visible = true);
+create policy "reviews_public_insert" on public.product_reviews for insert with check (true);
+create policy "reviews_admin_read_all" on public.product_reviews for select using (public.is_admin());
+create policy "reviews_admin_update" on public.product_reviews for update using (public.is_admin());
+create policy "reviews_admin_delete" on public.product_reviews for delete using (public.is_admin());
 
 -- =============================================================
 -- STORAGE: bucket para imagens de produtos

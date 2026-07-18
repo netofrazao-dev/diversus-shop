@@ -169,6 +169,34 @@ export function useProductCombos(productId) {
 }
 
 /**
+ * useProductReviews — busca as avaliações visíveis de um produto,
+ * já com a média e o total calculados.
+ */
+export function useProductReviews(productId) {
+  return useQuery({
+    queryKey: ['product-reviews', productId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('product_reviews')
+        .select('*')
+        .eq('product_id', productId)
+        .eq('is_visible', true)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const reviews = data || [];
+      const average = reviews.length
+        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+        : 0;
+
+      return { reviews, average, count: reviews.length };
+    },
+    enabled: !!productId,
+  });
+}
+
+/**
  * getEffectivePrice — calcula o preço "de fato" de um produto,
  * considerando promoção ativa (se dentro da janela de validade).
  */

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MapPin, User, Phone, Mail, Home, Hash, CheckCircle2, Truck, Tag, X, Check } from 'lucide-react';
+import { MapPin, User, Phone, Mail, Home, Hash, CheckCircle2, Truck, Tag, X, Check, Loader2 } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import { openWhatsAppOrder } from '../lib/whatsapp';
 import { supabase } from '../lib/supabaseClient';
@@ -11,7 +11,11 @@ import { getPendingCoupon, clearPendingCoupon } from '../hooks/useCouponCapture'
 import { DELIVERY_FEE, DELIVERY_TIME_NOTE } from '../lib/constants';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
-import PixPayment from '../components/product/PixPayment';
+import { lazy, Suspense } from 'react';
+// PixPayment usa a biblioteca "qrcode" (relativamente pesada) e só aparece
+// DEPOIS que o pedido é confirmado — não faz sentido baixar isso no
+// carregamento inicial do checkout, então vira um chunk separado.
+const PixPayment = lazy(() => import('../components/product/PixPayment'));
 import HoneypotField from '../components/ui/HoneypotField';
 
 const STORE_WHATSAPP = import.meta.env.VITE_STORE_WHATSAPP || '5500000000000';
@@ -173,11 +177,19 @@ export default function Checkout() {
   if (completedOrder) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
-        <PixPayment
-          amount={completedOrder.amount}
-          orderShortId={completedOrder.shortId}
-          onContinue={() => navigate('/', { state: { orderSuccess: true } })}
-        />
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="animate-spin text-primary" size={40} />
+            </div>
+          }
+        >
+          <PixPayment
+            amount={completedOrder.amount}
+            orderShortId={completedOrder.shortId}
+            onContinue={() => navigate('/', { state: { orderSuccess: true } })}
+          />
+        </Suspense>
       </div>
     );
   }

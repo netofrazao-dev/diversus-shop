@@ -121,7 +121,12 @@ O checkout e o carrinho agora somam uma **taxa de entrega fixa de R$1,00** ao to
 - **Botão fixo de comprar no celular**: ao rolar a página de um produto (fora a hora que ele está esgotado), aparece uma barra fixa no rodapé da tela com nome, preço e botão de comprar — pra não perder a ação de compra em telas compridas com combos/recomendações.
 - **Compressão de imagem**: toda foto de produto enviada pelo admin agora é comprimida automaticamente no navegador antes do upload (redimensiona pra no máximo 1600px no lado maior e converte pra JPEG otimizado). Isso deixa o site bem mais rápido pros clientes, principalmente em conexões mais fracas — e o admin não precisa fazer nada diferente, é automático.
 
-## 23. Build de produção
+## 24. Code splitting e testes automatizados
+
+- **Code splitting**: as páginas do Admin e a tela de pagamento Pix agora só são baixadas pelo navegador quando realmente acessadas — o cliente que só está comprando não baixa nenhum código do admin. Isso reduziu o pacote principal de ~711kb pra ~634kb, além de separar ~80kb em pedaços carregados sob demanda.
+- **Testes automatizados**: `npm test` roda os testes (usando Vitest). Já vem com um teste que trava especificamente o bug de bypass de variação obrigatória encontrado na varredura — se algum dia esse comportamento quebrar de novo (por exemplo, numa mudança futura no `ProductCard`), o teste falha imediatamente em vez de descobrirmos só quando um cliente reclamar.
+
+## 25. Build de produção
 
 ```bash
 npm run build

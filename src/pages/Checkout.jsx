@@ -337,11 +337,14 @@ export default function Checkout() {
           <h2 className="font-display font-bold text-lg">Resumo do pedido</h2>
           <div className="flex flex-col gap-3 max-h-64 overflow-y-auto pr-1">
             {items.map((item) => (
-              <div key={item.id} className="flex justify-between text-sm">
+              <div key={item.id} className="flex justify-between text-sm gap-2">
                 <span className="text-black/70">
                   {item.quantity}x {item.name}
+                  {item.variantLabel && (
+                    <span className="text-black/40"> ({item.variantLabel})</span>
+                  )}
                 </span>
-                <span className="font-semibold">{formatPrice(item.price * item.quantity)}</span>
+                <span className="font-semibold shrink-0">{formatPrice(item.price * item.quantity)}</span>
               </div>
             ))}
           </div>

@@ -257,6 +257,13 @@ export default function AdminProducts() {
     try {
       const imageUrls = await resolvePhotoUrls();
 
+      // Um produto "tem variação obrigatória" se algum grupo (marcado como
+      // obrigatório) tiver pelo menos um valor preenchido — usado pra evitar
+      // que o botão "Adicionar" rápido dos cards pule a escolha de variação.
+      const hasRequiredVariants = optionGroups.some(
+        (g) => g.is_required !== false && g.name.trim() && g.values.some((v) => v.value.trim())
+      );
+
       const payload = {
         name: form.name,
         description: form.description || null,
@@ -273,6 +280,7 @@ export default function AdminProducts() {
         promo_ends_at: form.promo_ends_at || null,
         image_url: imageUrls[0] || null,
         images: imageUrls,
+        has_variants: hasRequiredVariants,
       };
 
       let productId = form.id;

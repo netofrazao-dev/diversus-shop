@@ -37,6 +37,7 @@ create table if not exists public.products (
   promo_price numeric(10,2),
   promo_starts_at timestamptz,
   promo_ends_at timestamptz,
+  has_variants boolean not null default false, -- tem grupo de variação obrigatório? (evita "Adicionar" rápido pular a escolha)
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

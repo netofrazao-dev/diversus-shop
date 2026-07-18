@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Eye, BellRing } from 'lucide-react';
+import { ShoppingCart, Eye, BellRing, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
@@ -103,6 +103,14 @@ export default function ProductCard({ product, onAddToCart }) {
           >
             Avise-me
           </Button>
+        ) : product.has_variants ? (
+          // Produto tem variação obrigatória (cor, tamanho...) — não dá pra
+          // adicionar direto do card, precisa escolher a opção na página do produto
+          <Link to={`/produto/${id}`} className="mt-2">
+            <Button variant="primary" size="md" icon={ArrowRight} isFullWidth>
+              Ver opções
+            </Button>
+          </Link>
         ) : (
           <Button
             variant="primary"

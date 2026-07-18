@@ -104,6 +104,9 @@ export default function CartDrawer() {
                       <p className="font-display font-semibold text-sm text-black truncate">
                         {item.name}
                       </p>
+                      {item.variantLabel && (
+                        <p className="text-xs text-black/50 truncate">{item.variantLabel}</p>
+                      )}
                       <p className="font-display font-bold text-primary">
                         {formatPrice(item.price)}
                       </p>

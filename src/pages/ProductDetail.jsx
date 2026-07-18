@@ -376,10 +376,17 @@ export default function ProductDetail() {
                     variant="secondary"
                     size="md"
                     isFullWidth
-                    onClick={() => addCombo(combo, product, comboProduct)}
+                    disabled={hasOptions && !allOptionsSelected}
+                    onClick={() => addCombo(combo, product, comboProduct, variant)}
                   >
-                    Adicionar os dois com desconto
+                    {hasOptions && !allOptionsSelected
+                      ? 'Escolha as opções acima primeiro'
+                      : 'Adicionar os dois com desconto'}
                   </Button>
+                  <p className="text-[11px] text-black/40 text-center -mt-1">
+                    Se algum dos dois produtos tiver variação (cor, tamanho...), a loja confirma
+                    com você pelo WhatsApp antes de enviar.
+                  </p>
                 </div>
               );
             })}

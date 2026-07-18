@@ -59,10 +59,12 @@ export const useCartStore = create(
         set({ isDrawerOpen: true });
       },
 
-      // Adiciona dois produtos de uma vez (combo) e registra o desconto do par
-      addCombo: (comboDefinition, productA, productB) => {
+      // Adiciona dois produtos de uma vez (combo) e registra o desconto do par.
+      // variantA: variação já selecionada do produto atual (se houver), pra não
+      // perder a escolha de cor/tamanho ao usar o atalho "adicionar os dois".
+      addCombo: (comboDefinition, productA, productB, variantA = null) => {
         const { addItem } = get();
-        addItem(productA, 1);
+        addItem(productA, 1, variantA);
         addItem(productB, 1);
 
         set((state) => {

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Instagram, MessageCircle, MessageSquareHeart, Package } from 'lucide-react';
+import { Instagram, MessageCircle, MessageSquareHeart, Package, RotateCcw } from 'lucide-react';
 import SuggestionModal from '../product/SuggestionModal';
+import { STORE_LEGAL_NAME, STORE_DOCUMENT, hasLegalInfo } from '../../lib/constants';
 
 const INSTAGRAM_URL =
   'https://www.instagram.com/diversus__shop.acessorios?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==';
@@ -39,6 +40,9 @@ export default function Footer() {
             </Link>
             <Link to="/admin/login" className="hover:text-secondary">Área do administrador</Link>
             <Link to="/privacidade" className="hover:text-secondary">Política de Privacidade</Link>
+            <Link to="/trocas-e-devolucoes" className="flex items-center gap-1.5 hover:text-secondary">
+              <RotateCcw size={14} /> Trocas e Devoluções
+            </Link>
           </div>
         </div>
 
@@ -67,6 +71,11 @@ export default function Footer() {
         </div>
       </div>
       <div className="border-t border-white/10 py-4 flex flex-col items-center gap-1.5 text-center px-4">
+        {hasLegalInfo() && (
+          <p className="text-xs text-white/40">
+            {STORE_LEGAL_NAME} — {STORE_DOCUMENT}
+          </p>
+        )}
         <p className="text-xs text-white/40">
           © {new Date().getFullYear()} DIVERSUS SHOP. Todos os direitos reservados.
         </p>

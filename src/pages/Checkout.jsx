@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MapPin, User, Phone, Mail, Home, Hash, CheckCircle2, Truck, Tag, X, Check, Loader2 } from 'lucide-react';
+import { MapPin, User, Phone, Mail, Home, Hash, CheckCircle2, Truck, Tag, X, Check, Loader2, ShieldCheck } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import { openWhatsAppOrder } from '../lib/whatsapp';
 import { supabase } from '../lib/supabaseClient';
@@ -428,6 +428,10 @@ export default function Checkout() {
           >
             Confirmar e enviar no WhatsApp
           </Button>
+
+          <p className="flex items-center justify-center gap-1.5 text-xs text-black/50 -mt-1">
+            <ShieldCheck size={14} /> Seus dados estão protegidos e não são compartilhados
+          </p>
         </motion.div>
       </form>
     </div>

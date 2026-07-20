@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Minus, Plus, Trash2, ShoppingBag, Truck } from 'lucide-react';
+import { X, Minus, Plus, Trash2, ShoppingBag, Truck, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCartStore } from '../../store/cartStore';
 import { PLACEHOLDER_IMAGE, DELIVERY_FEE, DELIVERY_TIME_NOTE } from '../../lib/constants';
@@ -37,6 +37,7 @@ export default function CartDrawer() {
         <>
           {/* Overlay */}
           <motion.div
+            key="cart-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -46,6 +47,7 @@ export default function CartDrawer() {
 
           {/* Gaveta */}
           <motion.aside
+            key="cart-drawer"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
@@ -86,61 +88,66 @@ export default function CartDrawer() {
                   </Button>
                 </div>
               ) : (
-                items.map((item) => (
-                  <motion.div
-                    key={item.id}
-                    layout
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    className="flex gap-3 bg-white border-3 border-black rounded-2xl p-3 shadow-cartoon-sm"
-                  >
-                    <img
-                      src={item.image_url || PLACEHOLDER_IMAGE}
-                      alt={item.name}
-                      className="w-16 h-16 rounded-xl border-2 border-black object-cover flex-shrink-0"
-                    />
-                    <div className="flex-1 flex flex-col gap-1 min-w-0">
-                      <p className="font-display font-semibold text-sm text-black truncate">
-                        {item.name}
-                      </p>
-                      {item.variantLabel && (
-                        <p className="text-xs text-black/50 truncate">{item.variantLabel}</p>
-                      )}
-                      <p className="font-display font-bold text-primary">
-                        {formatPrice(item.price)}
-                      </p>
+                // AnimatePresence próprio pra lista — isso é o que garante que
+                // remover um item anima a saída dele de forma isolada, sem
+                // interferir (e travar) a animação de fechar a gaveta inteira.
+                <AnimatePresence mode="popLayout">
+                  {items.map((item) => (
+                    <motion.div
+                      key={item.id}
+                      layout
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      className="flex gap-3 bg-white border-3 border-black rounded-2xl p-3 shadow-cartoon-sm"
+                    >
+                      <img
+                        src={item.image_url || PLACEHOLDER_IMAGE}
+                        alt={item.name}
+                        className="w-16 h-16 rounded-xl border-2 border-black object-cover flex-shrink-0"
+                      />
+                      <div className="flex-1 flex flex-col gap-1 min-w-0">
+                        <p className="font-display font-semibold text-sm text-black truncate">
+                          {item.name}
+                        </p>
+                        {item.variantLabel && (
+                          <p className="text-xs text-black/50 truncate">{item.variantLabel}</p>
+                        )}
+                        <p className="font-display font-bold text-primary">
+                          {formatPrice(item.price)}
+                        </p>
 
-                      <div className="flex items-center gap-2 mt-1">
-                        <button
-                          onClick={() => decrementItem(item.id)}
-                          className="bg-white border-2 border-black rounded-full p-1 shadow-cartoon-sm active:translate-y-0.5 active:shadow-none transition-all"
-                          aria-label="Diminuir quantidade"
-                        >
-                          <Minus size={14} strokeWidth={3} />
-                        </button>
-                        <span className="font-display font-bold text-sm w-5 text-center">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => incrementItem(item.id)}
-                          className="bg-white border-2 border-black rounded-full p-1 shadow-cartoon-sm active:translate-y-0.5 active:shadow-none transition-all"
-                          aria-label="Aumentar quantidade"
-                        >
-                          <Plus size={14} strokeWidth={3} />
-                        </button>
+                        <div className="flex items-center gap-2 mt-1">
+                          <button
+                            onClick={() => decrementItem(item.id)}
+                            className="bg-white border-2 border-black rounded-full p-1 shadow-cartoon-sm active:translate-y-0.5 active:shadow-none transition-all"
+                            aria-label="Diminuir quantidade"
+                          >
+                            <Minus size={14} strokeWidth={3} />
+                          </button>
+                          <span className="font-display font-bold text-sm w-5 text-center">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => incrementItem(item.id)}
+                            className="bg-white border-2 border-black rounded-full p-1 shadow-cartoon-sm active:translate-y-0.5 active:shadow-none transition-all"
+                            aria-label="Aumentar quantidade"
+                          >
+                            <Plus size={14} strokeWidth={3} />
+                          </button>
 
-                        <button
-                          onClick={() => removeItem(item.id)}
-                          className="ml-auto text-red-500 hover:text-red-700 transition-colors"
-                          aria-label="Remover item"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                          <button
+                            onClick={() => removeItem(item.id)}
+                            className="ml-auto text-red-500 hover:text-red-700 transition-colors"
+                            aria-label="Remover item"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </motion.div>
-                ))
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
               )}
             </div>
 
@@ -180,6 +187,9 @@ export default function CartDrawer() {
                 >
                   Finalizar pedido
                 </Button>
+                <p className="flex items-center justify-center gap-1.5 text-xs text-black/40">
+                  <ShieldCheck size={13} /> Seus dados estão protegidos
+                </p>
               </div>
             )}
           </motion.aside>

@@ -131,7 +131,19 @@ O checkout e o carrinho agora somam uma **taxa de entrega fixa de R$1,00** ao to
 - **Consultar meu pedido** (`/meu-pedido`, linkado no rodapé): o cliente digita o telefone usado na compra e vê o status de todos os pedidos com aquele número — sem precisar te chamar no WhatsApp pra perguntar. A consulta passa por uma função segura no banco (`track_orders_by_phone`), que só retorna os pedidos daquele telefone específico, sem expor a tabela de pedidos inteira.
 - **Testes automatizados expandidos**: agora `npm test` cobre também o cálculo do carrinho (subtotal, desconto de combo, variações, `getComboDiscount` nunca ficando negativo) e o cálculo de preço promocional (`getEffectivePrice`) — a mesma função que já quebrou uma vez sem querer numa reescrita. Total: 22 testes.
 
-## 27. Build de produção
+## 28. Direito de arrependimento, identificação da empresa e selo de segurança
+
+- **Trocas e Devoluções** (`/trocas-e-devolucoes`, linkada no rodapé): explica o direito de arrependimento de 7 dias (Art. 49 do CDC), como pedir devolução, condições do produto, e o que fazer em caso de defeito (garantia, diferente de arrependimento).
+- **Identificação da empresa**: preencha `VITE_STORE_LEGAL_NAME` (razão social ou seu nome, se informal/MEI) e `VITE_STORE_DOCUMENT` (CNPJ ou CPF) nas variáveis de ambiente — isso aparece automaticamente no rodapé e na Política de Privacidade. Sem preencher, essas seções simplesmente não aparecem (não deixa nada quebrado, só fica sem essa informação até vocês preencherem).
+- **Selo de segurança**: "🔒 Seus dados estão protegidos" aparece perto do botão de finalizar tanto no carrinho quanto no checkout.
+
+⚠️ **Importante**: essas duas primeiras são exigências legais de verdade (CDC e identificação de CNPJ/CPF em vendas online no Brasil) — recomendo fortemente preencher `VITE_STORE_LEGAL_NAME` e `VITE_STORE_DOCUMENT` assim que possível.
+
+## 29. Bug corrigido — carrinho travando cliques da página
+
+Encontrado e corrigido: depois de remover um item do carrinho e fechar a gaveta, os cliques em qualquer produto da página paravam de funcionar (sem navegação, sem animação de hover). A causa era uma animação de saída da lista de itens que não tinha seu próprio `AnimatePresence`, o que confundia a animação de fechamento da gaveta e deixava o fundo escuro (invisível) preso por cima da página, bloqueando todos os cliques. Corrigido isolando a animação da lista de itens.
+
+## 30. Build de produção
 
 ```bash
 npm run build

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ShieldCheck, ChevronLeft } from 'lucide-react';
+import { STORE_LEGAL_NAME, STORE_DOCUMENT, hasLegalInfo } from '../lib/constants';
 
 export default function PrivacyPolicy() {
   return (
@@ -28,6 +29,11 @@ export default function PrivacyPolicy() {
             de você ao usar nosso site, para que servem e quais são os seus direitos, em conformidade
             com a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018).
           </p>
+          {hasLegalInfo() && (
+            <p className="mt-2">
+              <strong>Responsável pelo tratamento dos dados:</strong> {STORE_LEGAL_NAME} — {STORE_DOCUMENT}
+            </p>
+          )}
         </section>
 
         <section>

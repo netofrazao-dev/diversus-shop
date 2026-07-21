@@ -53,8 +53,9 @@ export default function PixPayment({ amount, orderShortId, onContinue }) {
 
       <h2 className="font-display font-bold text-2xl">Pague com Pix</h2>
       <p className="text-black/60 text-sm -mt-2">
-        Escaneie o QR Code ou copie o código abaixo no app do seu banco. Assim que pagar,
-        é só mandar o comprovante pra loja pelo WhatsApp (a conversa já foi aberta pra você).
+        Escaneie o QR Code ou copie o código abaixo no app do seu banco. Depois de pagar, clique
+        no botão abaixo pra confirmar — vamos te levar direto pro WhatsApp da loja com o resumo
+        do pedido, e é só mandar o comprovante por lá.
       </p>
 
       <p className="font-display font-bold text-3xl text-primary">{formatPrice(amount)}</p>
@@ -84,7 +85,7 @@ export default function PixPayment({ amount, orderShortId, onContinue }) {
       </div>
 
       <Button variant="primary" size="lg" isFullWidth onClick={onContinue} className="mt-2">
-        Já paguei / voltar para a loja
+        Já paguei / enviar pedido no WhatsApp
       </Button>
     </motion.div>
   );

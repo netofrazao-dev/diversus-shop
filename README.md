@@ -161,7 +161,13 @@ Um feed estilo "Stories" do Instagram, direto no site — pra você conversar ma
 - **"Vistos recentemente"**: aparece na Home, com os últimos produtos que o cliente visitou (guardado no navegador dele, não no banco — cada visitante vê só o próprio histórico).
 - **PWA (instalável)**: o site agora pode ser "instalado" na tela inicial do celular ou computador, como um app — funciona offline pra páginas já visitadas (mas nunca usa cache pra dados da loja, sempre busca produtos/pedidos atualizados do servidor).
 
-## 34. Build de produção
+## 35. Correções de UX: scroll, Pix antes do WhatsApp, e swipe nas fotos
+
+- **Scroll ao topo**: antes, ao clicar num produto vindo de uma tela rolada pra baixo, a página nova abria no mesmo ponto de rolagem (parecia "ir pro rodapé"). Corrigido — toda troca de página agora volta pro topo automaticamente.
+- **Pix antes do WhatsApp**: antes, o WhatsApp abria assim que o pedido era confirmado, e o cliente só via a tela do Pix se voltasse pro site depois. Agora a tela do Pix aparece primeiro, e o WhatsApp só abre quando o cliente clica em "Já paguei / enviar pedido no WhatsApp".
+- **Swipe nas fotos**: na página do produto, agora dá pra arrastar a foto principal pra esquerda/direita (no celular ou no mouse) pra trocar de imagem, além de continuar podendo clicar nas miniaturas.
+
+## 36. Build de produção
 
 ```bash
 npm run build

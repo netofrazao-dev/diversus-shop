@@ -144,20 +144,27 @@ export default function Checkout() {
 
       if (rpcError) throw rpcError;
 
-      // 3. Abre o WhatsApp com o pedido formatado
-      openWhatsAppOrder(STORE_WHATSAPP, form, items, total, {
-        deliveryFee: DELIVERY_FEE,
-        coupon: couponApplied,
-      });
-
-      // 4. Limpa o carrinho
+      // 3. Limpa o carrinho
       clearCart();
 
-      // 5. Se a loja tiver Pix configurado, mostra a tela de pagamento.
-      //    Senão, volta direto pra loja como antes.
+      // 4. Se a loja tiver Pix configurado, mostra a tela de pagamento PRIMEIRO —
+      //    o WhatsApp só abre quando o cliente clicar em continuar (senão o
+      //    celular é redirecionado pro app do WhatsApp antes de ver o QR Code).
       if (isPixConfigured()) {
-        setCompletedOrder({ amount: total, shortId: orderId.slice(0, 8) });
+        setCompletedOrder({
+          amount: total,
+          shortId: orderId.slice(0, 8),
+          openWhatsApp: () =>
+            openWhatsAppOrder(STORE_WHATSAPP, form, items, total, {
+              deliveryFee: DELIVERY_FEE,
+              coupon: couponApplied,
+            }),
+        });
       } else {
+        openWhatsAppOrder(STORE_WHATSAPP, form, items, total, {
+          deliveryFee: DELIVERY_FEE,
+          coupon: couponApplied,
+        });
         navigate('/', { state: { orderSuccess: true } });
       }
     } catch (err) {
@@ -182,7 +189,10 @@ export default function Checkout() {
           <PixPayment
             amount={completedOrder.amount}
             orderShortId={completedOrder.shortId}
-            onContinue={() => navigate('/', { state: { orderSuccess: true } })}
+            onContinue={() => {
+              completedOrder.openWhatsApp();
+              navigate('/', { state: { orderSuccess: true } });
+            }}
           />
         </Suspense>
       </div>

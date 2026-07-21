@@ -151,7 +151,17 @@ export default function ProductDetail() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="relative bg-primary-50 border-4 border-black rounded-3xl shadow-cartoon-lg overflow-hidden aspect-square"
+            className="relative bg-primary-50 border-4 border-black rounded-3xl shadow-cartoon-lg overflow-hidden aspect-square touch-pan-y"
+            drag={gallery.length > 1 ? 'x' : false}
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.15}
+            onDragEnd={(e, info) => {
+              if (info.offset.x < -60 && activeImage < gallery.length - 1) {
+                setActiveImage((i) => i + 1);
+              } else if (info.offset.x > 60 && activeImage > 0) {
+                setActiveImage((i) => i - 1);
+              }
+            }}
           >
             {(product.is_new || product.is_featured || product.is_sold_out || isPromo) && (
               <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
@@ -164,7 +174,8 @@ export default function ProductDetail() {
             <img
               src={gallery[activeImage] || PLACEHOLDER_IMAGE}
               alt={product.name}
-              className={`w-full h-full object-cover ${product.is_sold_out ? 'grayscale opacity-70' : ''}`}
+              draggable={false}
+              className={`w-full h-full object-cover pointer-events-none ${product.is_sold_out ? 'grayscale opacity-70' : ''}`}
             />
           </motion.div>
 

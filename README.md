@@ -143,7 +143,25 @@ O checkout e o carrinho agora somam uma **taxa de entrega fixa de R$1,00** ao to
 
 Encontrado e corrigido: depois de remover um item do carrinho e fechar a gaveta, os cliques em qualquer produto da página paravam de funcionar (sem navegação, sem animação de hover). A causa era uma animação de saída da lista de itens que não tinha seu próprio `AnimatePresence`, o que confundia a animação de fechamento da gaveta e deixava o fundo escuro (invisível) preso por cima da página, bloqueando todos os cliques. Corrigido isolando a animação da lista de itens.
 
-## 30. Build de produção
+## 31. Stories / mini-vlogs da loja
+
+Um feed estilo "Stories" do Instagram, direto no site — pra você conversar mais de perto com os clientes sobre produtos, estoque, bastidores, novidades, etc.
+
+- **Admin → Stories** (`/admin/stories`): publique uma foto ou vídeo curto (até 50MB), com legenda opcional e a possibilidade de marcar um produto (o cliente vê um botão "Ver produto" dentro do story). Fotos são comprimidas automaticamente; vídeos sobem do jeito que são enviados — grave vertical e evite vídeos muito longos/pesados, já que não tem compressão automática de vídeo (o Supabase Storage tem limite de espaço no plano gratuito).
+- **Na loja**: uma fileira de bolinhas aparece no topo da Home (só quando existe pelo menos um story ativo). Clicar abre o visualizador em tela cheia — vídeo toca com som (silenciado por padrão, com botão pra ativar), foto fica alguns segundos na tela, e dá pra navegar tocando nos lados ou pelas setas. Tem barrinha de progresso no topo, como no Instagram.
+- **Visibilidade**: cada story tem um botão "Visível/Oculto" no admin pra controlar manualmente, e opcionalmente uma data de expiração (se não preencher, fica no ar até você tirar do ar manualmente).
+
+## 33. Filtros no catálogo, notas nos cards, busca no admin, log de atividade, validação de total, vistos recentemente e PWA
+
+- **Filtros e ordenação no catálogo**: botão "Filtrar e ordenar" no Catálogo — por preço (menor/maior), mais recentes, e faixa de preço mín/máx. Fica salvo na URL (dá pra compartilhar o link já filtrado).
+- **Nota média nos cards**: agora aparece nos cards do Catálogo e da Home também, não só na página do produto — sem custo de performance extra (uma consulta só busca as notas de todos os produtos de uma vez).
+- **Busca/filtro nos Pedidos do admin**: busca por nome ou telefone do cliente, filtro por status e por período (de/até).
+- **Log de atividade do admin** (`/admin/atividade`): registra quem fez o quê — hoje cobre criar/editar/excluir produtos e cupons, e mudança de status de pedido. Se quiser cobrir mais ações (categorias, stories, etc), é só chamar `logActivity('nome da ação', { detalhes })` — o padrão já está em `src/lib/activityLog.js`.
+- **Validação do total do pedido no servidor**: o checkout agora usa uma função no banco (`create_order_with_items`) que cria o pedido e os itens numa transação só, com uma validação de segurança (o total não pode ser muito menor que o valor real dos itens, cupom usado precisa existir de verdade, etc). Não é uma validação perfeita — descontos de combo são calculados no site, não no banco, então a checagem usa margens generosas pra não travar vendas de verdade — mas já bloqueia manipulação grosseira.
+- **"Vistos recentemente"**: aparece na Home, com os últimos produtos que o cliente visitou (guardado no navegador dele, não no banco — cada visitante vê só o próprio histórico).
+- **PWA (instalável)**: o site agora pode ser "instalado" na tela inicial do celular ou computador, como um app — funciona offline pra páginas já visitadas (mas nunca usa cache pra dados da loja, sempre busca produtos/pedidos atualizados do servidor).
+
+## 34. Build de produção
 
 ```bash
 npm run build

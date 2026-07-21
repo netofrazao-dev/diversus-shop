@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Trash2, Edit2, X, Ticket, Power } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
+import { logActivity } from '../../lib/activityLog';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 
@@ -80,6 +81,7 @@ export default function AdminCoupons() {
         if (err) throw err;
       }
       setShowForm(false);
+      logActivity(form.id ? 'Cupom editado' : 'Cupom criado', { código: payload.code });
       loadCoupons();
     } catch (err) {
       setError(
@@ -94,12 +96,15 @@ export default function AdminCoupons() {
 
   const toggleActive = async (coupon) => {
     await supabase.from('coupons').update({ is_active: !coupon.is_active }).eq('id', coupon.id);
+    logActivity(coupon.is_active ? 'Cupom desativado' : 'Cupom ativado', { código: coupon.code });
     loadCoupons();
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Excluir este cupom?')) return;
+    const coupon = coupons.find((c) => c.id === id);
     await supabase.from('coupons').delete().eq('id', id);
+    logActivity('Cupom excluído', { código: coupon?.code });
     loadCoupons();
   };
 

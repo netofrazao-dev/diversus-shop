@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import { ArrowRight, Sparkles, Watch, Shirt, Gem, MessageSquareHeart, PartyPopper } from 'lucide-react';
-import { useProducts } from '../hooks/useProducts';
+import { useProducts, useProductRatings } from '../hooks/useProducts';
 import { useCartStore } from '../store/cartStore';
 import ProductSection from '../components/product/ProductSection';
 import Button from '../components/ui/Button';
 import InstagramCTA from '../components/layout/InstagramCTA';
 import SuggestionModal from '../components/product/SuggestionModal';
+import RecentlyViewed from '../components/product/RecentlyViewed';
+import StoriesBar from '../components/product/StoriesBar';
 
 const CATEGORY_SHORTCUTS = [
   { label: 'Relógios', icon: Watch, slug: 'relogios', color: 'bg-primary-100' },
@@ -19,6 +21,7 @@ export default function Home() {
   const location = useLocation();
   const { data: featured, isLoading: loadingFeatured } = useProducts({ featured: true, limit: 8 });
   const { data: newArrivals, isLoading: loadingNew } = useProducts({ isNew: true, limit: 8 });
+  const { data: ratings } = useProductRatings();
   const addItem = useCartStore((state) => state.addItem);
   const [suggestionOpen, setSuggestionOpen] = useState(false);
   const orderSuccess = location.state?.orderSuccess;
@@ -36,6 +39,9 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* STORIES */}
+      <StoriesBar />
 
       {/* HERO */}
       <section className="relative overflow-hidden bg-primary-50 border-b-4 border-black">
@@ -121,6 +127,7 @@ export default function Home() {
         isLoading={loadingFeatured}
         onAddToCart={addItem}
         accentColor="primary"
+        ratings={ratings}
       />
 
       {/* LANÇAMENTOS */}
@@ -132,8 +139,12 @@ export default function Home() {
           isLoading={loadingNew}
           onAddToCart={addItem}
           accentColor="secondary"
+          ratings={ratings}
         />
       </div>
+
+      {/* VISTOS RECENTEMENTE */}
+      <RecentlyViewed />
 
       {/* INSTAGRAM */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 py-14">

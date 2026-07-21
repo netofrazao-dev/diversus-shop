@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Minus, Plus, ChevronLeft, BellRing, Tag, Sparkles } from 'lucide-react';
@@ -18,6 +18,7 @@ import InstagramCTA from '../components/layout/InstagramCTA';
 import ProductReviews from '../components/product/ProductReviews';
 import ShareButton from '../components/product/ShareButton';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { trackProductView } from '../hooks/useRecentlyViewed';
 import { PLACEHOLDER_IMAGE } from '../lib/constants';
 
 const formatPrice = (value) =>
@@ -40,6 +41,10 @@ export default function ProductDetail() {
   const [selectedOptions, setSelectedOptions] = useState({}); // { groupId: valueObj }
 
   useDocumentTitle(product ? `${product.name} — DIVERSUS SHOP` : undefined);
+
+  useEffect(() => {
+    if (product?.id) trackProductView(product.id);
+  }, [product?.id]);
 
   const hasOptions = optionGroups && optionGroups.length > 0;
 

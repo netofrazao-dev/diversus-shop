@@ -9,9 +9,11 @@ import { supabase } from '../lib/supabaseClient';
  *  - isNew: true     -> só "Lançamentos"
  *  - categorySlug: 'relogios' -> filtra por categoria
  *  - limit: number
+ *  - sortBy: 'newest' (padrão) | 'price_asc' | 'price_desc'
+ *  - minPrice / maxPrice: number (opcional, filtra por faixa de preço)
  */
 export function useProducts(options = {}) {
-  const { featured, isNew, categorySlug, limit, search } = options;
+  const { featured, isNew, categorySlug, limit, search, sortBy, minPrice, maxPrice } = options;
 
   return useQuery({
     queryKey: ['products', options],
@@ -24,16 +26,18 @@ export function useProducts(options = {}) {
         ? '*, categories!inner(name, slug)'
         : '*, categories(name, slug)';
 
-      let query = supabase
-        .from('products')
-        .select(selectStr)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
+      let query = supabase.from('products').select(selectStr).eq('is_active', true);
+
+      if (sortBy === 'price_asc') query = query.order('price', { ascending: true });
+      else if (sortBy === 'price_desc') query = query.order('price', { ascending: false });
+      else query = query.order('created_at', { ascending: false });
 
       if (featured) query = query.eq('is_featured', true);
       if (isNew) query = query.eq('is_new', true);
       if (categorySlug) query = query.eq('categories.slug', categorySlug);
       if (search) query = query.ilike('name', `%${search}%`);
+      if (minPrice != null) query = query.gte('price', minPrice);
+      if (maxPrice != null) query = query.lte('price', maxPrice);
       if (limit) query = query.limit(limit);
 
       const { data, error } = await query;
@@ -193,6 +197,61 @@ export function useProductReviews(productId) {
       return { reviews, average, count: reviews.length };
     },
     enabled: !!productId,
+  });
+}
+
+/**
+ * useStories — busca os stories ativos (e ainda não expirados) da loja,
+ * do mais recente pro mais antigo — pro feed estilo "stories" da Home.
+ */
+export function useStories() {
+  return useQuery({
+    queryKey: ['store-stories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('store_stories')
+        .select('*, products(id, name, image_url)')
+        .order('display_order', { ascending: true })
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 1000 * 60 * 2, // 2 minutos
+  });
+}
+
+/**
+ * useProductRatings — busca a nota média e o total de avaliações de
+ * TODOS os produtos de uma vez (uma query só, evita fazer uma consulta
+ * por produto na listagem). Usado pra mostrar a notinha nos cards do
+ * catálogo/Home.
+ */
+export function useProductRatings() {
+  return useQuery({
+    queryKey: ['product-ratings-summary'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('product_reviews')
+        .select('product_id, rating')
+        .eq('is_visible', true);
+
+      if (error) throw error;
+
+      const summary = {};
+      (data || []).forEach(({ product_id, rating }) => {
+        if (!summary[product_id]) summary[product_id] = { total: 0, count: 0 };
+        summary[product_id].total += rating;
+        summary[product_id].count += 1;
+      });
+
+      const result = {};
+      Object.entries(summary).forEach(([productId, { total, count }]) => {
+        result[productId] = { average: total / count, count };
+      });
+      return result;
+    },
+    staleTime: 1000 * 60 * 5,
   });
 }
 

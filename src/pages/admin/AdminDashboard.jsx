@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutGrid, Package, LogOut, Store, BellRing, Tags, MessageSquareHeart, Tag, MessageSquare } from 'lucide-react';
+import { LayoutGrid, Package, LogOut, Store, BellRing, Tags, MessageSquareHeart, Tag, MessageSquare, Clapperboard, History } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 const NAV_ITEMS = [
@@ -7,9 +7,11 @@ const NAV_ITEMS = [
   { label: 'Produtos', to: '/admin/produtos', icon: Package },
   { label: 'Categorias', to: '/admin/categorias', icon: Tags },
   { label: 'Cupons', to: '/admin/cupons', icon: Tag },
+  { label: 'Stories', to: '/admin/stories', icon: Clapperboard },
   { label: 'Avaliações', to: '/admin/avaliacoes', icon: MessageSquare },
   { label: 'Desejos', to: '/admin/desejos', icon: BellRing },
   { label: 'Sugestões', to: '/admin/sugestoes', icon: MessageSquareHeart },
+  { label: 'Atividade', to: '/admin/atividade', icon: History },
 ];
 
 export default function AdminDashboard() {

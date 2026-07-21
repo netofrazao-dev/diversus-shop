@@ -6,6 +6,7 @@ import {
 import { supabase } from '../../lib/supabaseClient';
 import { PLACEHOLDER_IMAGE } from '../../lib/constants';
 import { compressImage } from '../../lib/imageCompression';
+import { logActivity } from '../../lib/activityLog';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 
@@ -349,6 +350,7 @@ export default function AdminProducts() {
       }
 
       setShowForm(false);
+      logActivity(form.id ? 'Produto editado' : 'Produto criado', { nome: form.name });
       loadData();
     } catch (err) {
       console.error(err);
@@ -360,7 +362,9 @@ export default function AdminProducts() {
 
   const handleDelete = async (productId) => {
     if (!confirm('Tem certeza que deseja excluir este produto?')) return;
+    const product = products.find((p) => p.id === productId);
     await supabase.from('products').delete().eq('id', productId);
+    logActivity('Produto excluído', { nome: product?.name });
     loadData();
   };
 

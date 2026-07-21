@@ -5,7 +5,7 @@ import ProductCard from './ProductCard';
  * ProductSection — Seção de grid de produtos usada na Home
  * (ex: "Mais Vendidos", "Lançamentos")
  */
-export default function ProductSection({ title, subtitle, products, isLoading, onAddToCart, accentColor = 'primary' }) {
+export default function ProductSection({ title, subtitle, products, isLoading, onAddToCart, accentColor = 'primary', ratings }) {
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="flex flex-col items-center text-center mb-8 gap-2">
@@ -42,7 +42,7 @@ export default function ProductSection({ title, subtitle, products, isLoading, o
               viewport={{ once: true }}
               transition={{ delay: i * 0.05 }}
             >
-              <ProductCard product={product} onAddToCart={onAddToCart} />
+              <ProductCard product={product} onAddToCart={onAddToCart} rating={ratings?.[product.id]} />
             </motion.div>
           ))}
         </div>

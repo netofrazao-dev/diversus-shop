@@ -22,6 +22,8 @@ const AdminOrders = lazy(() => import('../pages/admin/AdminOrders'));
 const AdminProducts = lazy(() => import('../pages/admin/AdminProducts'));
 const AdminCategories = lazy(() => import('../pages/admin/AdminCategories'));
 const AdminCoupons = lazy(() => import('../pages/admin/AdminCoupons'));
+const AdminStories = lazy(() => import('../pages/admin/AdminStories'));
+const AdminActivityLog = lazy(() => import('../pages/admin/AdminActivityLog'));
 const AdminReviews = lazy(() => import('../pages/admin/AdminReviews'));
 const AdminRestockRequests = lazy(() => import('../pages/admin/AdminRestockRequests'));
 const AdminSuggestions = lazy(() => import('../pages/admin/AdminSuggestions'));
@@ -93,6 +95,22 @@ export default function AppRoutes() {
             element={
               <Suspense fallback={<AdminLoadingFallback />}>
                 <AdminCoupons />
+              </Suspense>
+            }
+          />
+          <Route
+            path="stories"
+            element={
+              <Suspense fallback={<AdminLoadingFallback />}>
+                <AdminStories />
+              </Suspense>
+            }
+          />
+          <Route
+            path="atividade"
+            element={
+              <Suspense fallback={<AdminLoadingFallback />}>
+                <AdminActivityLog />
               </Suspense>
             }
           />

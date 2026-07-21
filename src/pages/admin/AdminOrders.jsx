@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Phone, MapPin, RefreshCcw, Wallet, Clock, Trophy } from 'lucide-react';
+import { Phone, MapPin, RefreshCcw, Wallet, Clock, Trophy, Search, X } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
+import { logActivity } from '../../lib/activityLog';
 
 const STATUS_OPTIONS = ['pendente', 'confirmado', 'enviado', 'entregue', 'cancelado'];
 
@@ -20,6 +21,12 @@ export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // ---- Busca e filtros ----
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+
   const loadOrders = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -35,14 +42,19 @@ export default function AdminOrders() {
     loadOrders();
   }, []);
 
-  const updateStatus = async (orderId, status) => {
+  const updateStatus = async (order, status) => {
     setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status } : o))
+      prev.map((o) => (o.id === order.id ? { ...o, status } : o))
     );
-    await supabase.from('orders').update({ status }).eq('id', orderId);
+    await supabase.from('orders').update({ status }).eq('id', order.id);
+    logActivity('Status do pedido alterado', {
+      cliente: order.customer_name,
+      de: order.status,
+      para: status,
+    });
   };
 
-  // ---- Estatísticas rápidas ----
+  // ---- Estatísticas rápidas (sempre sobre TODOS os pedidos, não filtrados) ----
   const stats = useMemo(() => {
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -54,7 +66,6 @@ export default function AdminOrders() {
 
     const pendingCount = orders.filter((o) => o.status === 'pendente').length;
 
-    // Produto mais vendido nos últimos 7 dias (por quantidade)
     const qtyByProduct = {};
     orders
       .filter((o) => new Date(o.created_at) >= sevenDaysAgo && o.status !== 'cancelado')
@@ -75,6 +86,34 @@ export default function AdminOrders() {
 
     return { soldToday, pendingCount, topProduct, topQty };
   }, [orders]);
+
+  // ---- Lista filtrada exibida ----
+  const filteredOrders = useMemo(() => {
+    return orders.filter((order) => {
+      if (statusFilter && order.status !== statusFilter) return false;
+
+      if (searchTerm.trim()) {
+        const term = searchTerm.trim().toLowerCase();
+        const matchesName = order.customer_name?.toLowerCase().includes(term);
+        const matchesPhone = order.customer_phone?.replace(/\D/g, '').includes(term.replace(/\D/g, ''));
+        if (!matchesName && !matchesPhone) return false;
+      }
+
+      if (dateFrom && new Date(order.created_at) < new Date(dateFrom)) return false;
+      if (dateTo && new Date(order.created_at) > new Date(`${dateTo}T23:59:59`)) return false;
+
+      return true;
+    });
+  }, [orders, searchTerm, statusFilter, dateFrom, dateTo]);
+
+  const hasActiveFilters = searchTerm || statusFilter || dateFrom || dateTo;
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('');
+    setDateFrom('');
+    setDateTo('');
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -125,18 +164,88 @@ export default function AdminOrders() {
         </div>
       )}
 
+      {/* Busca e filtros */}
+      {!loading && orders.length > 0 && (
+        <div className="bg-white border-3 border-black rounded-2xl shadow-cartoon-sm p-4 flex flex-col sm:flex-row gap-3 sm:items-end flex-wrap">
+          <div className="flex flex-col gap-1.5 flex-1 min-w-[180px]">
+            <label className="font-display font-semibold text-xs">Buscar por nome ou telefone</label>
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-black/40" />
+              <input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Ex: Maria ou 91999999999"
+                className="w-full border-2 border-black rounded-xl pl-9 pr-3 py-2 text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="font-display font-semibold text-xs">Status</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="border-2 border-black rounded-xl px-3 py-2 text-sm"
+            >
+              <option value="">Todos</option>
+              {STATUS_OPTIONS.map((s) => (
+                <option key={s} value={s}>
+                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="font-display font-semibold text-xs">De</label>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="border-2 border-black rounded-xl px-3 py-2 text-sm"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="font-display font-semibold text-xs">Até</label>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="border-2 border-black rounded-xl px-3 py-2 text-sm"
+            />
+          </div>
+
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="flex items-center gap-1 text-sm font-display font-semibold text-black/60 hover:text-red-600 pb-2"
+            >
+              <X size={16} /> Limpar
+            </button>
+          )}
+        </div>
+      )}
+
       {loading ? (
         <p className="font-display text-black/50">Carregando pedidos...</p>
       ) : orders.length === 0 ? (
         <p className="font-display text-black/50">Nenhum pedido recebido ainda.</p>
+      ) : filteredOrders.length === 0 ? (
+        <p className="font-display text-black/50">Nenhum pedido encontrado com esses filtros.</p>
       ) : (
         <div className="grid gap-4">
-          {orders.map((order, i) => (
+          {hasActiveFilters && (
+            <p className="text-xs text-black/40 font-display font-semibold">
+              {filteredOrders.length} de {orders.length} pedidos
+            </p>
+          )}
+          {filteredOrders.map((order, i) => (
             <motion.div
               key={order.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.03 }}
+              transition={{ delay: Math.min(i * 0.03, 0.3) }}
               className="bg-white border-3 border-black rounded-2xl shadow-cartoon-sm p-5 flex flex-col md:flex-row md:items-center gap-4 justify-between"
             >
               <div className="flex-1 min-w-0">
@@ -169,7 +278,7 @@ export default function AdminOrders() {
 
               <select
                 value={order.status}
-                onChange={(e) => updateStatus(order.id, e.target.value)}
+                onChange={(e) => updateStatus(order, e.target.value)}
                 className="border-2 border-black rounded-xl px-3 py-2 font-display font-semibold text-sm bg-white shadow-cartoon-sm"
               >
                 {STATUS_OPTIONS.map((status) => (

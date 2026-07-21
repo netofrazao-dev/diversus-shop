@@ -117,37 +117,32 @@ export default function Checkout() {
 
     setSubmitting(true);
     try {
-      // 1. Cria o pedido no Supabase
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          customer_name: form.name,
-          customer_phone: form.phone,
-          customer_email: form.email || null,
-          street: form.street,
-          number: form.number,
-          complement: form.complement || null,
-          neighborhood: form.neighborhood,
-          total,
-          coupon_code: couponApplied?.code || null,
-          coupon_discount: couponApplied?.discount || null,
-        })
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      // 2. Cria os itens do pedido
+      // Cria o pedido E os itens numa transação só (função no banco) — se a
+      // validação de segurança recusar o total, nada fica salvo pela metade.
       const orderItems = items.map((item) => ({
-        order_id: order.id,
         product_id: item.productId,
         product_name: item.variantLabel ? `${item.name} (${item.variantLabel})` : item.name,
         unit_price: item.price,
         quantity: item.quantity,
       }));
 
-      const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
-      if (itemsError) throw itemsError;
+      const { data: orderId, error: rpcError } = await supabase.rpc('create_order_with_items', {
+        p_order: {
+          customer_name: form.name,
+          customer_phone: form.phone,
+          customer_email: form.email || '',
+          street: form.street,
+          number: form.number,
+          complement: form.complement || '',
+          neighborhood: form.neighborhood,
+          total,
+          coupon_code: couponApplied?.code || '',
+          coupon_discount: couponApplied?.discount ?? '',
+        },
+        p_items: orderItems,
+      });
+
+      if (rpcError) throw rpcError;
 
       // 3. Abre o WhatsApp com o pedido formatado
       openWhatsAppOrder(STORE_WHATSAPP, form, items, total, {
@@ -161,7 +156,7 @@ export default function Checkout() {
       // 5. Se a loja tiver Pix configurado, mostra a tela de pagamento.
       //    Senão, volta direto pra loja como antes.
       if (isPixConfigured()) {
-        setCompletedOrder({ amount: total, shortId: order.id.slice(0, 8) });
+        setCompletedOrder({ amount: total, shortId: orderId.slice(0, 8) });
       } else {
         navigate('/', { state: { orderSuccess: true } });
       }

@@ -202,6 +202,19 @@ create table if not exists public.product_reviews (
 create index if not exists idx_reviews_product on public.product_reviews(product_id);
 
 -- =============================================================
+-- 13b. TABELA: admin_activity_log — log de atividade do admin
+-- =============================================================
+create table if not exists public.admin_activity_log (
+  id uuid primary key default gen_random_uuid(),
+  admin_email text,
+  action text not null,
+  details jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_activity_log_created on public.admin_activity_log(created_at desc);
+
+-- =============================================================
 -- 14. TABELA: admins (whitelist de administradores)
 -- Usada para diferenciar admin de cliente comum via auth.uid()
 -- =============================================================
@@ -257,6 +270,136 @@ create trigger trg_decrement_stock
   for each row
   when (new.product_id is not null)
   execute function public.decrement_product_stock();
+
+-- =============================================================
+-- FUNÇÃO + TRIGGER: validação (melhor esforço) do total do pedido
+-- O total é calculado no navegador e confiado sem checagem — como o
+-- pagamento é sempre confirmado manualmente (WhatsApp/Pix), o risco
+-- é baixo, mas essa validação pega manipulações grosseiras (total
+-- muito abaixo do valor real dos itens, cupom inexistente, etc).
+-- Não é perfeita: usa margens generosas pra não travar descontos
+-- legítimos de combo (calculados no app, não no banco).
+-- =============================================================
+create or replace function public.validate_order_total()
+returns trigger as $$
+declare
+  rec record;
+  computed_subtotal numeric;
+  order_row public.orders%rowtype;
+  coupon_exists boolean;
+begin
+  for rec in select distinct order_id from new_rows loop
+    select coalesce(sum(quantity * unit_price), 0) into computed_subtotal
+    from public.order_items where order_id = rec.order_id;
+
+    select * into order_row from public.orders where id = rec.order_id;
+
+    if order_row.total > computed_subtotal + 50 then
+      raise exception 'Total do pedido inconsistente: maior que o valor dos itens';
+    end if;
+
+    if order_row.total < 0 then
+      raise exception 'Total do pedido não pode ser negativo';
+    end if;
+
+    if order_row.total < (computed_subtotal * 0.1) - 20 then
+      raise exception 'Total do pedido muito abaixo do esperado pros itens';
+    end if;
+
+    if order_row.coupon_code is not null then
+      select exists(select 1 from public.coupons where code = order_row.coupon_code) into coupon_exists;
+      if not coupon_exists then
+        raise exception 'Cupom informado não existe';
+      end if;
+
+      if order_row.coupon_discount is not null and order_row.coupon_discount > computed_subtotal then
+        raise exception 'Desconto de cupom maior que o valor dos itens';
+      end if;
+    end if;
+  end loop;
+
+  return null;
+end;
+$$ language plpgsql security definer
+set search_path = public;
+
+drop trigger if exists trg_validate_order_total on public.order_items;
+create trigger trg_validate_order_total
+  after insert on public.order_items
+  referencing new table as new_rows
+  for each statement
+  execute function public.validate_order_total();
+
+-- =============================================================
+-- FUNÇÃO: create_order_with_items — cria o pedido E os itens numa
+-- transação só, com a mesma validação acima. Se a validação recusar,
+-- NADA fica salvo (nem um pedido "órfão" sem itens) — diferente de
+-- fazer os dois inserts separados, onde uma falha no segundo deixa
+-- lixo no banco. O checkout do site usa essa função em vez de dois
+-- inserts separados. O trigger acima continua existindo como uma
+-- segunda camada de proteção, caso alguém tente inserir direto na
+-- tabela order_items sem passar por essa função.
+-- =============================================================
+create or replace function public.create_order_with_items(p_order jsonb, p_items jsonb)
+returns uuid
+language plpgsql
+as $$
+declare
+  v_order_id uuid;
+  v_total numeric;
+  v_computed_subtotal numeric;
+  v_coupon_code text;
+  v_coupon_discount numeric;
+begin
+  v_total := (p_order->>'total')::numeric;
+  v_coupon_code := nullif(p_order->>'coupon_code', '');
+  v_coupon_discount := nullif(p_order->>'coupon_discount', '')::numeric;
+
+  select coalesce(sum((item->>'quantity')::int * (item->>'unit_price')::numeric), 0)
+  into v_computed_subtotal
+  from jsonb_array_elements(p_items) as item;
+
+  if v_total > v_computed_subtotal + 50 then
+    raise exception 'Total do pedido inconsistente: maior que o valor dos itens';
+  end if;
+  if v_total < 0 then
+    raise exception 'Total do pedido não pode ser negativo';
+  end if;
+  if v_total < (v_computed_subtotal * 0.1) - 20 then
+    raise exception 'Total do pedido muito abaixo do esperado pros itens';
+  end if;
+  if v_coupon_code is not null then
+    if not exists(select 1 from public.coupons where code = v_coupon_code) then
+      raise exception 'Cupom informado não existe';
+    end if;
+    if v_coupon_discount is not null and v_coupon_discount > v_computed_subtotal then
+      raise exception 'Desconto de cupom maior que o valor dos itens';
+    end if;
+  end if;
+
+  insert into public.orders (
+    customer_name, customer_phone, customer_email, street, number,
+    complement, neighborhood, total, coupon_code, coupon_discount
+  ) values (
+    p_order->>'customer_name', p_order->>'customer_phone', nullif(p_order->>'customer_email', ''),
+    p_order->>'street', p_order->>'number', nullif(p_order->>'complement', ''), p_order->>'neighborhood',
+    v_total, v_coupon_code, v_coupon_discount
+  ) returning id into v_order_id;
+
+  insert into public.order_items (order_id, product_id, product_name, unit_price, quantity)
+  select
+    v_order_id,
+    nullif(item->>'product_id', '')::uuid,
+    item->>'product_name',
+    (item->>'unit_price')::numeric,
+    (item->>'quantity')::int
+  from jsonb_array_elements(p_items) as item;
+
+  return v_order_id;
+end;
+$$;
+
+grant execute on function public.create_order_with_items(jsonb, jsonb) to anon, authenticated;
 
 -- =============================================================
 -- FUNÇÃO + TRIGGER: contador de uso de cupom
@@ -416,6 +559,7 @@ alter table public.products enable row level security;
 alter table public.orders enable row level security;
 alter table public.order_items enable row level security;
 alter table public.admins enable row level security;
+alter table public.admin_activity_log enable row level security;
 alter table public.restock_requests enable row level security;
 alter table public.product_option_groups enable row level security;
 alter table public.product_option_values enable row level security;
@@ -495,6 +639,12 @@ create policy "admins_self_read"
   on public.admins for select
   using (auth.uid() = id);
 
+-- --- log de atividade: só admin acessa ---
+create policy "activity_log_admin_all"
+  on public.admin_activity_log for all
+  using (public.is_admin())
+  with check (public.is_admin());
+
 -- --- restock_requests: qualquer visitante pode registrar interesse,
 --     só admin pode ler e apagar ---
 create policy "restock_requests_public_insert"
@@ -550,6 +700,35 @@ create policy "reviews_admin_update" on public.product_reviews for update using 
 create policy "reviews_admin_delete" on public.product_reviews for delete using (public.is_admin());
 
 -- =============================================================
+-- TABELA: store_stories — feed de "stories" (mini vlogs da loja)
+-- =============================================================
+create table if not exists public.store_stories (
+  id uuid primary key default gen_random_uuid(),
+  caption text,
+  media_url text not null,
+  media_type text not null check (media_type in ('image', 'video')),
+  thumbnail_url text,
+  product_id uuid references public.products(id) on delete set null,
+  is_active boolean not null default true,
+  display_order integer not null default 0,
+  expires_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_stories_active on public.store_stories(is_active, display_order, created_at desc);
+
+alter table public.store_stories enable row level security;
+
+create policy "stories_public_read"
+  on public.store_stories for select
+  using (is_active = true and (expires_at is null or expires_at >= now()));
+
+create policy "stories_admin_all"
+  on public.store_stories for all
+  using (public.is_admin())
+  with check (public.is_admin());
+
+-- =============================================================
 -- STORAGE: bucket para imagens de produtos
 -- =============================================================
 insert into storage.buckets (id, name, public)
@@ -571,6 +750,29 @@ create policy "product_images_admin_update"
 create policy "product_images_admin_delete"
   on storage.objects for delete
   using (bucket_id = 'product-images' and public.is_admin());
+
+-- =============================================================
+-- STORAGE: bucket para mídia dos Stories (fotos/vídeos)
+-- =============================================================
+insert into storage.buckets (id, name, public)
+values ('store-stories', 'store-stories', true)
+on conflict (id) do nothing;
+
+create policy "store_stories_media_public_read"
+  on storage.objects for select
+  using (bucket_id = 'store-stories');
+
+create policy "store_stories_media_admin_insert"
+  on storage.objects for insert
+  with check (bucket_id = 'store-stories' and public.is_admin());
+
+create policy "store_stories_media_admin_update"
+  on storage.objects for update
+  using (bucket_id = 'store-stories' and public.is_admin());
+
+create policy "store_stories_media_admin_delete"
+  on storage.objects for delete
+  using (bucket_id = 'store-stories' and public.is_admin());
 
 -- =============================================================
 -- SEED opcional: categorias iniciais

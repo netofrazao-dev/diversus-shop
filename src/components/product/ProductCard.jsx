@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import RestockRequestModal from './RestockRequestModal';
+import StarRating from './StarRating';
 import { getEffectivePrice } from '../../hooks/useProducts';
 import { PLACEHOLDER_IMAGE } from '../../lib/constants';
 
@@ -17,8 +18,9 @@ import { PLACEHOLDER_IMAGE } from '../../lib/constants';
  * props:
  *  - product: { id, name, price, compare_at_price, image_url, is_featured, is_new, is_sold_out }
  *  - onAddToCart: fn(product) — chamado ao clicar no botão de carrinho
+ *  - rating: { average, count } (opcional) — nota média já calculada, pra evitar N+1 queries
  */
-export default function ProductCard({ product, onAddToCart }) {
+export default function ProductCard({ product, onAddToCart, rating }) {
   const [restockModalOpen, setRestockModalOpen] = useState(false);
   const {
     id,
@@ -80,6 +82,15 @@ export default function ProductCard({ product, onAddToCart }) {
         <h3 className="font-display font-semibold text-black text-base leading-snug line-clamp-2">
           {name}
         </h3>
+
+        {rating && rating.count > 0 && (
+          <div className="flex items-center gap-1.5 -mt-1">
+            <StarRating rating={rating.average} size={13} />
+            <span className="text-xs text-black/50">
+              {rating.average.toFixed(1)} ({rating.count})
+            </span>
+          </div>
+        )}
 
         <div className="flex items-baseline gap-2 mt-auto">
           {hasDiscount && (

@@ -4,6 +4,7 @@ import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import CartDrawer from './components/layout/CartDrawer';
 import ScrollToTop from './components/layout/ScrollToTop';
+import ErrorBoundary from './components/layout/ErrorBoundary';
 import AppRoutes from './routes/AppRoutes';
 import { useCouponCapture } from './hooks/useCouponCapture';
 
@@ -28,11 +29,13 @@ function Layout() {
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <HashRouter>
-        <ScrollToTop />
-        <Layout />
-      </HashRouter>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <HashRouter>
+          <ScrollToTop />
+          <Layout />
+        </HashRouter>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }

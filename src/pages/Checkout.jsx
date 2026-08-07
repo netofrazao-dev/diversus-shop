@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { MapPin, User, Phone, Mail, Home, Hash, CheckCircle2, Truck, Tag, X, Check, Loader2, ShieldCheck } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import { openWhatsAppOrder } from '../lib/whatsapp';
+import { sendOrderEmails } from '../lib/email';
 import { supabase } from '../lib/supabaseClient';
 import { isPixConfigured } from '../lib/pix';
 import { validateCoupon } from '../lib/coupons';
@@ -143,6 +144,17 @@ export default function Checkout() {
       });
 
       if (rpcError) throw rpcError;
+
+      // Envia e-mail de confirmação (pra loja e pro cliente) — sem travar o
+      // fluxo se falhar, e só se o EmailJS estiver configurado.
+      sendOrderEmails({
+        orderShortId: orderId.slice(0, 8),
+        customer: form,
+        items,
+        total,
+        deliveryFee: DELIVERY_FEE,
+        coupon: couponApplied,
+      });
 
       // 3. Limpa o carrinho
       clearCart();

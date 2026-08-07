@@ -247,3 +247,28 @@ src/
 └── App.jsx, main.jsx, index.css
 ```
 
+
+## 37. E-mail de confirmação, esgotados no fim do catálogo e proteção contra tela branca
+
+- **Esgotados no fim do catálogo**: produtos esgotados agora aparecem sempre depois dos disponíveis, em qualquer ordenação — não ficam mais misturados no meio.
+- **Rede de segurança (Error Boundary)**: se algum erro de programação quebrar uma parte do site, o cliente agora vê uma mensagem amigável com botão de recarregar, em vez de uma tela branca.
+- **E-mail de confirmação de pedido** (opcional): quando um pedido é feito, você recebe um e-mail de aviso e o cliente recebe uma confirmação (se ele informou e-mail no checkout).
+
+### Como configurar o e-mail de confirmação (EmailJS)
+
+Funciona 100% pelo navegador, sem servidor. Passo a passo:
+
+1. Crie uma conta grátis em https://www.emailjs.com
+2. Em **Email Services**, conecte um e-mail (ex: seu Gmail) e anote o **Service ID**
+3. Em **Email Templates**, crie DOIS templates:
+   - Um pra loja (aviso de novo pedido) e outro pro cliente (confirmação)
+   - Nos dois, use estas variáveis no corpo: `{{order_id}}`, `{{customer_name}}`, `{{customer_phone}}`, `{{customer_email}}`, `{{address}}`, `{{order_summary}}`, `{{total}}`, e no campo "To Email" use `{{to_email}}`
+   - Anote o **Template ID** de cada um
+4. Em **Account → General**, copie a **Public Key**
+5. No Vercel (Environment Variables), preencha:
+   - `VITE_EMAILJS_PUBLIC_KEY`, `VITE_EMAILJS_SERVICE_ID`
+   - `VITE_EMAILJS_TEMPLATE_STORE`, `VITE_EMAILJS_TEMPLATE_CUSTOMER`
+   - `VITE_STORE_EMAIL` (o e-mail onde você quer receber os avisos)
+6. Redeploy sem cache
+
+Se não configurar, o pedido continua funcionando normal — só não manda e-mail. O plano grátis do EmailJS envia até 200 e-mails/mês.

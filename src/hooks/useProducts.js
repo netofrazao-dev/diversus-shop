@@ -28,6 +28,10 @@ export function useProducts(options = {}) {
 
       let query = supabase.from('products').select(selectStr).eq('is_active', true);
 
+      // Esgotados sempre vão pro fim da lista (is_sold_out=false vem primeiro),
+      // e dentro de cada grupo aplica a ordenação escolhida pelo cliente.
+      query = query.order('is_sold_out', { ascending: true });
+
       if (sortBy === 'price_asc') query = query.order('price', { ascending: true });
       else if (sortBy === 'price_desc') query = query.order('price', { ascending: false });
       else query = query.order('created_at', { ascending: false });

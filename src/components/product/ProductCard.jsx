@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Eye, BellRing, ArrowRight } from 'lucide-react';
+import { ShoppingCart, Eye, BellRing, ArrowRight, Truck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import RestockRequestModal from './RestockRequestModal';
 import StarRating from './StarRating';
 import { getEffectivePrice } from '../../hooks/useProducts';
-import { PLACEHOLDER_IMAGE } from '../../lib/constants';
+import { PLACEHOLDER_IMAGE, IS_FREE_DELIVERY } from '../../lib/constants';
 
 /**
  * ProductCard — Card de produto do DIVERSUS SHOP
@@ -102,6 +102,12 @@ export default function ProductCard({ product, onAddToCart, rating }) {
             {formatPrice(effectivePrice)}
           </span>
         </div>
+
+        {IS_FREE_DELIVERY && !isSoldOut && (
+          <span className="inline-flex items-center gap-1 text-xs font-display font-bold text-green-700 -mt-1">
+            <Truck size={12} strokeWidth={2.5} /> Frete grátis
+          </span>
+        )}
 
         {isSoldOut ? (
           <Button

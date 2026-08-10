@@ -19,6 +19,7 @@ const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || '';
 const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || '';
 const TEMPLATE_STORE = import.meta.env.VITE_EMAILJS_TEMPLATE_STORE || '';
 const TEMPLATE_CUSTOMER = import.meta.env.VITE_EMAILJS_TEMPLATE_CUSTOMER || '';
+const TEMPLATE_NOTIFY = import.meta.env.VITE_EMAILJS_TEMPLATE_NOTIFY || '';
 const STORE_EMAIL = import.meta.env.VITE_STORE_EMAIL || '';
 
 export const isEmailConfigured = () => !!(PUBLIC_KEY && SERVICE_ID);
@@ -88,5 +89,29 @@ export async function sendOrderEmails({ orderShortId, customer, items, total, de
     await Promise.allSettled(tasks);
   } catch (err) {
     console.error('Falha ao enviar e-mail de confirmação:', err);
+  }
+}
+
+/**
+ * sendStoreNotification — avisa a loja por e-mail sobre eventos leves como
+ * "novo cliente sugeriu um produto" ou "alguém quer aviso de reposição".
+ * Usa um template único (VITE_EMAILJS_TEMPLATE_NOTIFY) com um título e um
+ * corpo genéricos. Best-effort: nunca trava a ação principal.
+ *
+ * @param {string} title - assunto curto, ex: "Nova sugestão de produto"
+ * @param {string} body  - corpo da mensagem
+ */
+export async function sendStoreNotification(title, body) {
+  if (!isEmailConfigured() || !TEMPLATE_NOTIFY || !STORE_EMAIL) return;
+
+  try {
+    await emailjs.send(
+      SERVICE_ID,
+      TEMPLATE_NOTIFY,
+      { to_email: STORE_EMAIL, notify_title: title, notify_body: body },
+      { publicKey: PUBLIC_KEY }
+    );
+  } catch (err) {
+    console.error('Falha ao enviar notificação pra loja:', err);
   }
 }

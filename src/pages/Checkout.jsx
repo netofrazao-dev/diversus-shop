@@ -9,7 +9,7 @@ import { supabase } from '../lib/supabaseClient';
 import { isPixConfigured } from '../lib/pix';
 import { validateCoupon } from '../lib/coupons';
 import { getPendingCoupon, clearPendingCoupon } from '../hooks/useCouponCapture';
-import { DELIVERY_FEE, DELIVERY_TIME_NOTE } from '../lib/constants';
+import { DELIVERY_FEE, DELIVERY_TIME_NOTE, IS_FREE_DELIVERY } from '../lib/constants';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import { lazy, Suspense } from 'react';
@@ -396,9 +396,13 @@ export default function Checkout() {
                 <span>-{formatPrice(couponDiscount)}</span>
               </div>
             )}
-            <div className="flex justify-between text-sm text-black/60">
-              <span>Taxa de entrega</span>
-              <span>{formatPrice(DELIVERY_FEE)}</span>
+            <div className="flex justify-between text-sm">
+              <span className="text-black/60">Entrega</span>
+              {IS_FREE_DELIVERY ? (
+                <span className="font-display font-bold text-green-700">GRÁTIS 🎉</span>
+              ) : (
+                <span className="text-black/60">{formatPrice(DELIVERY_FEE)}</span>
+              )}
             </div>
             <div className="flex justify-between items-center">
               <span className="font-display font-semibold">Total</span>

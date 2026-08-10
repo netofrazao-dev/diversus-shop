@@ -42,6 +42,8 @@ export function buildOrderMessage(customer, items, total, options = {}) {
   }
   if (deliveryFee) {
     lines.push(`Taxa de entrega: ${formatPrice(deliveryFee)}`);
+  } else {
+    lines.push(`Frete: GRÁTIS`);
   }
   lines.push(`*Total: ${formatPrice(total)}*`);
 

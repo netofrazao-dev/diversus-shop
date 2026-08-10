@@ -6,6 +6,7 @@ import Input from '../ui/Input';
 import Button from '../ui/Button';
 import { Link } from 'react-router-dom';
 import HoneypotField from '../ui/HoneypotField';
+import { sendStoreNotification } from '../../lib/email';
 
 /**
  * SuggestionModal — "O que você gostaria que a gente vendesse?"
@@ -30,6 +31,10 @@ export default function SuggestionModal({ isOpen, onClose }) {
         customer_name: name || null,
         customer_contact: contact || null,
       });
+      sendStoreNotification(
+        'Nova sugestão de produto 💡',
+        `Um cliente sugeriu:\n\n"${message.trim()}"\n\nNome: ${name || '(não informado)'}\nContato: ${contact || '(não informado)'}\n\nVeja todas as sugestões no painel: /admin/sugestoes`
+      );
       setDone(true);
     } catch (err) {
       console.error(err);

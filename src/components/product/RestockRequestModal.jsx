@@ -6,6 +6,7 @@ import Input from '../ui/Input';
 import Button from '../ui/Button';
 import { Link } from 'react-router-dom';
 import HoneypotField from '../ui/HoneypotField';
+import { sendStoreNotification } from '../../lib/email';
 
 /**
  * RestockRequestModal — Modal de interesse em produto esgotado
@@ -32,6 +33,10 @@ export default function RestockRequestModal({ product, isOpen, onClose }) {
         customer_name: name || null,
         customer_contact: contact || null,
       });
+      sendStoreNotification(
+        'Alguém quer um produto de volta 🔔',
+        `Um cliente pediu aviso quando este produto voltar ao estoque:\n\nProduto: ${product.name}\nNome: ${name || '(não informado)'}\nContato: ${contact || '(não informado)'}\n\nVeja todos os pedidos de reposição no painel: /admin/desejos`
+      );
       setDone(true);
     } catch (err) {
       console.error(err);

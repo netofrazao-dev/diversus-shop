@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { X, Minus, Plus, Trash2, ShoppingBag, Truck, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCartStore } from '../../store/cartStore';
-import { PLACEHOLDER_IMAGE, DELIVERY_FEE, DELIVERY_TIME_NOTE } from '../../lib/constants';
+import { PLACEHOLDER_IMAGE, DELIVERY_FEE, DELIVERY_TIME_NOTE, IS_FREE_DELIVERY } from '../../lib/constants';
 import Button from '../ui/Button';
 
 const formatPrice = (value) =>
@@ -167,8 +167,12 @@ export default function CartDrawer() {
                   </div>
                 )}
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-black/60">Taxa de entrega</span>
-                  <span className="text-black/60">{formatPrice(DELIVERY_FEE)}</span>
+                  <span className="text-black/60">Entrega</span>
+                  {IS_FREE_DELIVERY ? (
+                    <span className="font-display font-bold text-green-700">GRÁTIS 🎉</span>
+                  ) : (
+                    <span className="text-black/60">{formatPrice(DELIVERY_FEE)}</span>
+                  )}
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="font-display font-semibold text-lg">Total</span>

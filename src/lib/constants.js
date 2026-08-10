@@ -6,7 +6,11 @@
 export const PLACEHOLDER_IMAGE = `${import.meta.env.BASE_URL}placeholder-product.png`;
 
 /** Taxa de entrega fixa, somada ao total no carrinho e no checkout. */
-export const DELIVERY_FEE = Number(import.meta.env.VITE_DELIVERY_FEE ?? 1);
+/** Taxa de entrega. Padrão agora é 0 (frete grátis). Pode ser reativada via VITE_DELIVERY_FEE. */
+export const DELIVERY_FEE = Number(import.meta.env.VITE_DELIVERY_FEE ?? 0);
+
+/** true quando a entrega é gratuita — usado pra destacar "Frete grátis" pela loja */
+export const IS_FREE_DELIVERY = DELIVERY_FEE === 0;
 
 /** Aviso sobre o horário das entregas, mostrado no carrinho e no checkout. */
 export const DELIVERY_TIME_NOTE = 'As entregas começam a partir das 15h30.';

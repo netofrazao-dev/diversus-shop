@@ -2,6 +2,7 @@ import { HashRouter, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Navbar from './components/layout/Navbar';
 import FreeShippingBanner from './components/layout/FreeShippingBanner';
+import InstallAppButton from './components/layout/InstallAppButton';
 import Footer from './components/layout/Footer';
 import CartDrawer from './components/layout/CartDrawer';
 import ScrollToTop from './components/layout/ScrollToTop';
@@ -25,6 +26,7 @@ function Layout() {
       </main>
       {!isAdminRoute && <Footer />}
       {!isAdminRoute && <CartDrawer />}
+      {!isAdminRoute && <InstallAppButton />}
     </div>
   );
 }

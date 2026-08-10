@@ -272,3 +272,15 @@ Funciona 100% pelo navegador, sem servidor. Passo a passo:
 6. Redeploy sem cache
 
 Se não configurar, o pedido continua funcionando normal — só não manda e-mail. O plano grátis do EmailJS envia até 200 e-mails/mês.
+
+## 38. Botão de instalar app e reforma do UI/UX de Produtos
+
+- **Botão de instalar o app**: aparece um convite discreto no canto inferior pra instalar a loja como app no celular/computador. No Android/Chrome abre o instalador nativo; no iPhone mostra a instrução ("Compartilhar → Adicionar à Tela de Início", já que o Safari não permite instalar via código). Se o cliente dispensar, não aparece de novo.
+- **Área de Produtos reformulada**:
+  - As seções opcionais (Promoção, Variações, Recomendações, Combos) agora ficam **recolhidas por padrão** — cadastrar um produto simples virou preencher só o básico, sem rolar por tudo
+  - Cada seção recolhida mostra um **selo** quando tem conteúdo (ex: "2 grupo(s)"), então dá pra ver o que está preenchido sem abrir
+  - **Barra de ações fixa** no rodapé do formulário — os botões de salvar ficam sempre visíveis, mesmo com o form longo
+  - Botão **"Salvar e criar outro"** — cadastra e já limpa o formulário pro próximo item, sem fechar e reabrir
+  - **Busca e filtro** na lista (por nome, e por visíveis/ocultos/esgotados)
+  - **Aviso de sucesso/erro** visual (antes só dava um alerta do navegador em caso de erro)
+  - A lista some enquanto o formulário está aberto, pra não competir pela tela

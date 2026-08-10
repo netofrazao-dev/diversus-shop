@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Plus, Trash2, Edit2, Upload, X, Star, EyeOff, Eye, Tag, Sparkles, Layers,
+  Search, CheckCircle2, AlertCircle, Package,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { PLACEHOLDER_IMAGE } from '../../lib/constants';
@@ -9,6 +10,7 @@ import { compressImage } from '../../lib/imageCompression';
 import { logActivity } from '../../lib/activityLog';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
+import CollapsibleSection from '../../components/ui/CollapsibleSection';
 
 const emptyForm = {
   id: null,
@@ -41,6 +43,16 @@ export default function AdminProducts() {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loadingRelations, setLoadingRelations] = useState(false);
+  const [toast, setToast] = useState(null); // { type: 'success' | 'error', message }
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState(''); // '', 'active', 'hidden', 'soldout'
+
+  // Some com o aviso de sucesso/erro sozinho depois de alguns segundos
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   const loadData = async () => {
     const [{ data: prods }, { data: cats }] = await Promise.all([
@@ -252,8 +264,14 @@ export default function AdminProducts() {
   };
 
   // ---- Salvar tudo ----
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e, options = {}) => {
+    if (e) e.preventDefault();
+    // Validação mínima quando chamado pelo botão "Salvar e criar outro"
+    // (que não passa pelo submit nativo do formulário)
+    if (!form.name.trim() || !form.price) {
+      setToast({ type: 'error', message: 'Preencha pelo menos nome e preço.' });
+      return;
+    }
     setSaving(true);
     try {
       const imageUrls = await resolvePhotoUrls();
@@ -349,12 +367,27 @@ export default function AdminProducts() {
         }
       }
 
-      setShowForm(false);
       logActivity(form.id ? 'Produto editado' : 'Produto criado', { nome: form.name });
+      setToast({
+        type: 'success',
+        message: form.id ? 'Produto atualizado!' : `"${form.name}" foi criado!`,
+      });
+
+      if (options.keepOpen) {
+        // Mantém o formulário aberto e limpo, pra cadastrar o próximo item
+        // rapidinho sem precisar clicar em "Novo produto" de novo
+        setForm(emptyForm);
+        setPhotos([]);
+        resetRelations();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        setShowForm(false);
+      }
+
       loadData();
     } catch (err) {
       console.error(err);
-      alert('Erro ao salvar produto. Verifique os campos e tente novamente.');
+      setToast({ type: 'error', message: 'Erro ao salvar produto. Confira os campos.' });
     } finally {
       setSaving(false);
     }
@@ -370,14 +403,44 @@ export default function AdminProducts() {
 
   const otherProducts = products.filter((p) => p.id !== form.id);
 
+  // Lista exibida no painel, aplicando busca por nome e filtro de status
+  const filteredProducts = products.filter((p) => {
+    if (searchTerm.trim() && !p.name.toLowerCase().includes(searchTerm.trim().toLowerCase())) {
+      return false;
+    }
+    if (statusFilter === 'active' && !p.is_active) return false;
+    if (statusFilter === 'hidden' && p.is_active) return false;
+    if (statusFilter === 'soldout' && !p.is_sold_out) return false;
+    return true;
+  });
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="font-display font-bold text-2xl sm:text-3xl">Produtos</h1>
+        <div>
+          <h1 className="font-display font-bold text-2xl sm:text-3xl">Produtos</h1>
+          <p className="text-sm text-black/50">
+            {products.length} produto(s) cadastrado(s)
+          </p>
+        </div>
         <Button variant="primary" icon={Plus} onClick={openNewForm}>
           Novo produto
         </Button>
       </div>
+
+      {/* Aviso de sucesso/erro */}
+      {toast && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`flex items-center gap-2 border-3 border-black rounded-2xl px-4 py-3 font-display font-semibold text-sm ${
+            toast.type === 'success' ? 'bg-accent-green' : 'bg-accent-pink'
+          }`}
+        >
+          {toast.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+          {toast.message}
+        </motion.div>
+      )}
 
       {showForm && (
         <motion.form
@@ -534,10 +597,12 @@ export default function AdminProducts() {
           </div>
 
           {/* Promoção */}
-          <div className="border-2 border-black rounded-2xl p-4 flex flex-col gap-3 bg-accent-green/10">
-            <p className="font-display font-bold flex items-center gap-2">
-              <Tag size={18} /> Promoção (opcional)
-            </p>
+          <CollapsibleSection
+            title="Promoção"
+            icon={Tag}
+            className="bg-accent-green/10"
+            badge={form.promo_price ? 'ativa' : null}
+          >
             <div className="grid sm:grid-cols-3 gap-4">
               <Input
                 label="Preço promocional (R$)"
@@ -563,19 +628,21 @@ export default function AdminProducts() {
             <p className="text-xs text-black/50">
               Se não preencher início/fim, a promoção fica ativa enquanto o preço promocional estiver preenchido.
             </p>
-          </div>
+          </CollapsibleSection>
 
           {/* Variações (cor, tamanho, sabor...) */}
-          <div className="border-2 border-black rounded-2xl p-4 flex flex-col gap-4 bg-primary-50/40">
-            <div className="flex items-center justify-between">
-              <p className="font-display font-bold flex items-center gap-2">
-                <Layers size={18} /> Variações (cor, tamanho, sabor...)
-              </p>
+          <CollapsibleSection
+            title="Variações (cor, tamanho...)"
+            icon={Layers}
+            className="bg-primary-50/40"
+            badge={optionGroups.length > 0 ? `${optionGroups.length} grupo(s)` : null}
+          >
+            <div className="flex justify-end">
               <Button type="button" variant="outline" size="sm" icon={Plus} onClick={addOptionGroup}>
                 Novo grupo
               </Button>
             </div>
-            <p className="text-xs text-black/50 -mt-2">
+            <p className="text-xs text-black/50">
               Em cada valor, você pode escolher uma "foto vinculada" — o número corresponde à
               ordem das fotos na galeria lá em cima. Ao selecionar essa opção, o cliente vê
               automaticamente aquela foto em destaque na página do produto.
@@ -675,13 +742,15 @@ export default function AdminProducts() {
                 </div>
               </div>
             ))}
-          </div>
+          </CollapsibleSection>
 
           {/* Recomendações */}
-          <div className="border-2 border-black rounded-2xl p-4 flex flex-col gap-3 bg-secondary/10">
-            <p className="font-display font-bold flex items-center gap-2">
-              <Sparkles size={18} /> Recomendações ("Você também pode gostar")
-            </p>
+          <CollapsibleSection
+            title='Recomendações ("Você também pode gostar")'
+            icon={Sparkles}
+            className="bg-secondary/10"
+            badge={recommendedIds.length > 0 ? `${recommendedIds.length}` : null}
+          >
             <div className="max-h-48 overflow-y-auto flex flex-col gap-1.5 bg-white border-2 border-black rounded-xl p-3">
               {otherProducts.length === 0 && (
                 <p className="text-sm text-black/50">Cadastre outros produtos primeiro.</p>
@@ -698,14 +767,16 @@ export default function AdminProducts() {
                 </label>
               ))}
             </div>
-          </div>
+          </CollapsibleSection>
 
           {/* Combos */}
-          <div className="border-2 border-black rounded-2xl p-4 flex flex-col gap-3 bg-accent-yellow/10">
-            <div className="flex items-center justify-between">
-              <p className="font-display font-bold flex items-center gap-2">
-                <Tag size={18} /> Combo — compre junto e ganhe desconto
-              </p>
+          <CollapsibleSection
+            title="Combo — compre junto e ganhe desconto"
+            icon={Tag}
+            className="bg-accent-yellow/10"
+            badge={combos.length > 0 ? `${combos.length}` : null}
+          >
+            <div className="flex justify-end">
               <Button type="button" variant="outline" size="sm" icon={Plus} onClick={addCombo}>
                 Novo combo
               </Button>
@@ -750,17 +821,78 @@ export default function AdminProducts() {
                 </button>
               </div>
             ))}
-          </div>
+          </CollapsibleSection>
 
-          <Button type="submit" variant="primary" isLoading={saving || loadingRelations} isFullWidth>
-            Salvar produto
-          </Button>
+          {/* Barra de ações fixa — sempre visível, mesmo com o form longo */}
+          <div className="sticky bottom-0 -mx-5 sm:-mx-6 -mb-5 sm:-mb-6 bg-white border-t-3 border-black px-5 sm:px-6 py-4 flex flex-col sm:flex-row gap-3">
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={saving || loadingRelations}
+              className="flex-1"
+            >
+              Salvar produto
+            </Button>
+            {!form.id && (
+              <Button
+                type="button"
+                variant="outline"
+                isLoading={saving || loadingRelations}
+                onClick={() => handleSubmit(null, { keepOpen: true })}
+                className="flex-1"
+              >
+                Salvar e criar outro
+              </Button>
+            )}
+            <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>
+              Cancelar
+            </Button>
+          </div>
         </motion.form>
       )}
 
-      {/* Lista de produtos */}
-      <div className="grid gap-3">
-        {products.map((product) => (
+      {/* Busca e filtro da lista */}
+      {!showForm && products.length > 0 && (
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-black/40" />
+            <input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar produto por nome..."
+              className="w-full border-3 border-black rounded-2xl pl-9 pr-3 py-2.5 text-sm shadow-cartoon-sm"
+            />
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="border-3 border-black rounded-2xl px-3 py-2.5 text-sm shadow-cartoon-sm"
+          >
+            <option value="">Todos</option>
+            <option value="active">Visíveis</option>
+            <option value="hidden">Ocultos</option>
+            <option value="soldout">Esgotados</option>
+          </select>
+        </div>
+      )}
+
+      {/* Lista de produtos — escondida enquanto o formulário está aberto,
+          pra não ficar disputando espaço e confundir */}
+      <div className={`grid gap-3 ${showForm ? 'hidden' : ''}`}>
+        {filteredProducts.length === 0 && products.length > 0 && (
+          <p className="text-black/50 font-display text-center py-8">
+            Nenhum produto encontrado com esses filtros.
+          </p>
+        )}
+        {products.length === 0 && (
+          <div className="flex flex-col items-center gap-3 py-12 text-center">
+            <Package size={40} className="text-black/20" />
+            <p className="text-black/50 font-display">
+              Nenhum produto cadastrado ainda. Clique em &quot;Novo produto&quot; pra começar.
+            </p>
+          </div>
+        )}
+        {filteredProducts.map((product) => (
           <div
             key={product.id}
             className={`bg-white border-3 border-black rounded-2xl shadow-cartoon-sm p-4 flex items-center gap-4 ${

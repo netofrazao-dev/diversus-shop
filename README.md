@@ -284,3 +284,9 @@ Se não configurar, o pedido continua funcionando normal — só não manda e-ma
   - **Busca e filtro** na lista (por nome, e por visíveis/ocultos/esgotados)
   - **Aviso de sucesso/erro** visual (antes só dava um alerta do navegador em caso de erro)
   - A lista some enquanto o formulário está aberto, pra não competir pela tela
+
+## 39. Correção: botão "Lançamentos" e links "Ver todos"
+
+O botão "Lançamentos" da Home levava pra `/catalogo?categoria=lancamentos`, tratando como se fosse uma categoria — mas "Lançamento" é uma marcação do produto (a caixinha que você marca no admin), não uma categoria. Corrigido pra usar `/catalogo?novidades=1`, que filtra de verdade pelos produtos marcados como lançamento.
+
+Aproveitei e adicionei um link **"Ver todos"** nas seções "Mais Vendidos" e "Lançamentos" da Home, levando pro catálogo já filtrado certinho.

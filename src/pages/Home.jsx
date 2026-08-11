@@ -73,7 +73,7 @@ export default function Home() {
                   Ver catálogo
                 </Button>
               </Link>
-              <Link to="/catalogo?categoria=lancamentos">
+              <Link to="/catalogo?novidades=1">
                 <Button variant="outline" size="xl">
                   Lançamentos
                 </Button>
@@ -128,6 +128,7 @@ export default function Home() {
         onAddToCart={addItem}
         accentColor="primary"
         ratings={ratings}
+        viewAllLink="/catalogo?mais-vendidos=1"
       />
 
       {/* LANÇAMENTOS */}
@@ -140,6 +141,7 @@ export default function Home() {
           onAddToCart={addItem}
           accentColor="secondary"
           ratings={ratings}
+          viewAllLink="/catalogo?novidades=1"
         />
       </div>
 

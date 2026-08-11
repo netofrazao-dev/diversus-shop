@@ -22,6 +22,8 @@ export default function Catalog() {
   const sortBy = searchParams.get('ordenar') || undefined;
   const minPrice = searchParams.get('min') ? Number(searchParams.get('min')) : undefined;
   const maxPrice = searchParams.get('max') ? Number(searchParams.get('max')) : undefined;
+  const isNew = searchParams.get('novidades') === '1' || undefined;
+  const featured = searchParams.get('mais-vendidos') === '1' || undefined;
 
   const addItem = useCartStore((state) => state.addItem);
   const { data: products, isLoading } = useProducts({
@@ -30,11 +32,17 @@ export default function Catalog() {
     sortBy,
     minPrice,
     maxPrice,
+    isNew,
+    featured,
   });
   const { data: ratings } = useProductRatings();
 
   const title = searchQuery
     ? `Resultados para "${searchQuery}"`
+    : isNew
+    ? 'Lançamentos'
+    : featured
+    ? 'Mais Vendidos'
     : categorySlug
     ? `Categoria: ${categorySlug}`
     : 'Catálogo completo';
@@ -155,6 +163,10 @@ export default function Catalog() {
         <p className="font-display font-semibold text-black/50 text-center py-16">
           {searchQuery
             ? `Nenhum produto encontrado para "${searchQuery}".`
+            : isNew
+            ? 'Nenhum lançamento no momento — volte em breve!'
+            : featured
+            ? 'Nenhum produto em destaque no momento.'
             : 'Nenhum produto encontrado com esses filtros.'}
         </p>
       )}

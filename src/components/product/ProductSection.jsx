@@ -1,11 +1,13 @@
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
 import ProductCard from './ProductCard';
 
 /**
  * ProductSection — Seção de grid de produtos usada na Home
  * (ex: "Mais Vendidos", "Lançamentos")
  */
-export default function ProductSection({ title, subtitle, products, isLoading, onAddToCart, accentColor = 'primary', ratings }) {
+export default function ProductSection({ title, subtitle, products, isLoading, onAddToCart, accentColor = 'primary', ratings, viewAllLink }) {
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="flex flex-col items-center text-center mb-8 gap-2">
@@ -21,6 +23,14 @@ export default function ProductSection({ title, subtitle, products, isLoading, o
         <h2 className="font-display font-bold text-3xl sm:text-4xl text-black">
           {title}
         </h2>
+        {viewAllLink && (
+          <Link
+            to={viewAllLink}
+            className="font-display font-semibold text-sm text-primary hover:underline flex items-center gap-1"
+          >
+            Ver todos <ArrowRight size={14} />
+          </Link>
+        )}
       </div>
 
       {isLoading ? (

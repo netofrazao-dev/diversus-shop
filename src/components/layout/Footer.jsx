@@ -21,6 +21,8 @@ export default function Footer() {
           </p>
           <p className="text-white/60 text-sm">
             Acessórios com atitude: relógios, camisas e cordões para todos os estilos.
+            Somos uma loja daqui de <strong className="text-white/80">Breves-PA</strong>, no
+            coração do Marajó. 🏝️💜
           </p>
         </div>
 

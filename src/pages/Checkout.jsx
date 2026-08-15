@@ -453,6 +453,9 @@ export default function Checkout() {
           <p className="flex items-center justify-center gap-1.5 text-xs text-black/50 -mt-1">
             <ShieldCheck size={14} /> Seus dados estão protegidos e não são compartilhados
           </p>
+          <p className="flex items-center justify-center gap-1.5 text-xs font-display font-semibold text-green-700">
+            <MapPin size={14} /> Loja local de Breves-PA — compre com a confiança de quem é daqui 💜
+          </p>
         </motion.div>
       </form>
     </div>

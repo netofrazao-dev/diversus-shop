@@ -290,3 +290,12 @@ Se não configurar, o pedido continua funcionando normal — só não manda e-ma
 O botão "Lançamentos" da Home levava pra `/catalogo?categoria=lancamentos`, tratando como se fosse uma categoria — mas "Lançamento" é uma marcação do produto (a caixinha que você marca no admin), não uma categoria. Corrigido pra usar `/catalogo?novidades=1`, que filtra de verdade pelos produtos marcados como lançamento.
 
 Aproveitei e adicionei um link **"Ver todos"** nas seções "Mais Vendidos" e "Lançamentos" da Home, levando pro catálogo já filtrado certinho.
+
+## 40. Destaque de loja local (Breves-PA)
+
+Pra passar mais confiança pro público local (que ainda está se acostumando com compra online), o site agora reforça em vários pontos que a loja é de Breves:
+- **Faixa do topo**: "Loja de Breves-PA 🏝️ · Frete GRÁTIS aqui na cidade!"
+- **Hero da Home**: selo "LOJA DE BREVES-PA" e texto reforçando que é uma loja local do Marajó
+- **Checkout**: selo "Loja local de Breves-PA — compre com a confiança de quem é daqui" perto do botão de finalizar (momento de maior insegurança do cliente)
+- **Rodapé**: menção a Breves e ao Marajó
+- **Título e descrição do site** (aba do navegador e preview ao compartilhar link no WhatsApp): agora mencionam Breves-PA

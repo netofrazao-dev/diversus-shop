@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowRight, Sparkles, Watch, Shirt, Gem, MessageSquareHeart, PartyPopper } from 'lucide-react';
+import { ArrowRight, Sparkles, Watch, Shirt, Gem, MessageSquareHeart, PartyPopper, MapPin } from 'lucide-react';
 import { useProducts, useProductRatings } from '../hooks/useProducts';
 import { useCartStore } from '../store/cartStore';
 import ProductSection from '../components/product/ProductSection';
@@ -52,9 +52,9 @@ export default function Home() {
             transition={{ duration: 0.5 }}
             className="flex flex-col gap-6"
           >
-            <span className="inline-flex items-center gap-1.5 self-start bg-accent-yellow border-2 border-black rounded-full px-4 py-1.5 font-display font-bold text-xs shadow-cartoon-sm">
-              <Sparkles size={14} />
-              NOVA COLEÇÃO CHEGOU
+            <span className="inline-flex items-center gap-1.5 self-start bg-accent-green border-2 border-black rounded-full px-4 py-1.5 font-display font-bold text-xs shadow-cartoon-sm">
+              <MapPin size={14} />
+              LOJA DE BREVES-PA 🏝️
             </span>
 
             <h1 className="font-display font-bold text-4xl sm:text-5xl lg:text-6xl text-black leading-[1.1]">
@@ -64,7 +64,9 @@ export default function Home() {
             </h1>
 
             <p className="font-body text-lg text-black/70 max-w-md">
-              Relógios, camisas e cordões que combinam com quem não tem medo de se destacar. Compre agora e receba com estilo.
+              Somos uma loja <strong>daqui de Breves</strong>! Relógios, camisas e cordões com
+              entrega rápida e frete grátis pra nossa cidade. Compra local, com a confiança de
+              quem é do Marajó. 💜
             </p>
 
             <div className="flex flex-wrap gap-4">

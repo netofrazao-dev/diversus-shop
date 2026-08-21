@@ -299,3 +299,22 @@ Pra passar mais confiança pro público local (que ainda está se acostumando co
 - **Checkout**: selo "Loja local de Breves-PA — compre com a confiança de quem é daqui" perto do botão de finalizar (momento de maior insegurança do cliente)
 - **Rodapé**: menção a Breves e ao Marajó
 - **Título e descrição do site** (aba do navegador e preview ao compartilhar link no WhatsApp): agora mencionam Breves-PA
+
+## 41. Pixel do Meta (Facebook/Instagram Ads)
+
+Rastreamento de e-commerce pra quem for anunciar no Instagram/Facebook. Eventos disparados automaticamente:
+
+- **PageView** — a cada página visitada
+- **ViewContent** — cliente abriu a página de um produto
+- **AddToCart** — adicionou um produto ao carrinho (pelo card ou pela página do produto)
+- **InitiateCheckout** — chegou na tela de finalizar compra
+- **Purchase** — pedido confirmado (o evento mais importante — é o que o Meta usa pra achar mais gente parecida com quem compra)
+
+### Como configurar
+
+1. Acesse o **Gerenciador de Eventos** (business.facebook.com/events_manager)
+2. Vá em **Fontes de dados** → seu Pixel → copie o **ID do Pixel** (um número)
+3. No Vercel, adicione: `VITE_META_PIXEL_ID=` (cole o número)
+4. Redeploy sem cache
+
+Se não preencher, nada é carregado — o site funciona normal, sem nenhum script do Meta. Pra conferir se está funcionando, instale a extensão **"Meta Pixel Helper"** no Chrome e navegue pelo site — ela mostra em tempo real quais eventos estão disparando.

@@ -19,6 +19,7 @@ import ProductReviews from '../components/product/ProductReviews';
 import ShareButton from '../components/product/ShareButton';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { trackProductView } from '../hooks/useRecentlyViewed';
+import { trackViewContent, trackAddToCart } from '../lib/metaPixel';
 import { PLACEHOLDER_IMAGE } from '../lib/constants';
 
 const formatPrice = (value) =>
@@ -43,7 +44,10 @@ export default function ProductDetail() {
   useDocumentTitle(product ? `${product.name} — DIVERSUS SHOP` : undefined);
 
   useEffect(() => {
-    if (product?.id) trackProductView(product.id);
+    if (product?.id) {
+      trackProductView(product.id);
+      trackViewContent(product);
+    }
   }, [product?.id]);
 
   const hasOptions = optionGroups && optionGroups.length > 0;
@@ -109,6 +113,7 @@ export default function ProductDetail() {
   const handleAddToCart = () => {
     if (hasOptions && !allOptionsSelected) return;
     addItem(product, quantity, variant);
+    trackAddToCart(product, quantity);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };

@@ -7,6 +7,7 @@ import Button from '../ui/Button';
 import RestockRequestModal from './RestockRequestModal';
 import StarRating from './StarRating';
 import { getEffectivePrice } from '../../hooks/useProducts';
+import { trackAddToCart } from '../../lib/metaPixel';
 import { PLACEHOLDER_IMAGE, IS_FREE_DELIVERY } from '../../lib/constants';
 
 /**
@@ -134,7 +135,10 @@ export default function ProductCard({ product, onAddToCart, rating }) {
             size="md"
             icon={ShoppingCart}
             isFullWidth
-            onClick={() => onAddToCart?.(product)}
+            onClick={() => {
+              onAddToCart?.(product);
+              trackAddToCart(product, 1);
+            }}
             className="mt-2"
           >
             Adicionar

@@ -6,6 +6,7 @@ import InstallAppButton from './components/layout/InstallAppButton';
 import Footer from './components/layout/Footer';
 import CartDrawer from './components/layout/CartDrawer';
 import ScrollToTop from './components/layout/ScrollToTop';
+import MetaPixelTracker from './components/layout/MetaPixelTracker';
 import ErrorBoundary from './components/layout/ErrorBoundary';
 import AppRoutes from './routes/AppRoutes';
 import { useCouponCapture } from './hooks/useCouponCapture';
@@ -37,6 +38,7 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <HashRouter>
           <ScrollToTop />
+          <MetaPixelTracker />
           <Layout />
         </HashRouter>
       </QueryClientProvider>

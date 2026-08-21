@@ -5,6 +5,7 @@ import { MapPin, User, Phone, Mail, Home, Hash, CheckCircle2, Truck, Tag, X, Che
 import { useCartStore } from '../store/cartStore';
 import { openWhatsAppOrder } from '../lib/whatsapp';
 import { sendOrderEmails } from '../lib/email';
+import { trackInitiateCheckout, trackPurchase } from '../lib/metaPixel';
 import { supabase } from '../lib/supabaseClient';
 import { isPixConfigured } from '../lib/pix';
 import { validateCoupon } from '../lib/coupons';
@@ -92,6 +93,11 @@ export default function Checkout() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (items.length > 0) trackInitiateCheckout(items, total);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleRemoveCoupon = () => {
     setCouponApplied(null);
     setCouponInput('');
@@ -144,6 +150,10 @@ export default function Checkout() {
       });
 
       if (rpcError) throw rpcError;
+
+      // Pixel do Meta: evento mais importante pra anúncio — é o que o Meta
+      // usa pra otimizar quem mostra o anúncio (achar mais compradores).
+      trackPurchase(items, total, orderId);
 
       // Envia e-mail de confirmação (pra loja e pro cliente) — sem travar o
       // fluxo se falhar, e só se o EmailJS estiver configurado.

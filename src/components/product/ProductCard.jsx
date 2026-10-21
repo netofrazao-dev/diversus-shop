@@ -6,9 +6,9 @@ import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import RestockRequestModal from './RestockRequestModal';
 import StarRating from './StarRating';
-import { getEffectivePrice } from '../../hooks/useProducts';
+import { getEffectivePrice, useGlobalDiscount } from '../../lib/pricing';
 import { trackAddToCart } from '../../lib/metaPixel';
-import { PLACEHOLDER_IMAGE, IS_FREE_DELIVERY } from '../../lib/constants';
+import { PLACEHOLDER_IMAGE, FREE_DELIVERY_MIN_ORDER } from '../../lib/constants';
 
 /**
  * ProductCard — Card de produto do DIVERSUS SHOP
@@ -23,6 +23,7 @@ import { PLACEHOLDER_IMAGE, IS_FREE_DELIVERY } from '../../lib/constants';
  */
 export default function ProductCard({ product, onAddToCart, rating }) {
   const [restockModalOpen, setRestockModalOpen] = useState(false);
+  useGlobalDiscount(); // re-renderiza quando o desconto da loja muda
   const {
     id,
     name,
@@ -104,7 +105,9 @@ export default function ProductCard({ product, onAddToCart, rating }) {
           </span>
         </div>
 
-        {IS_FREE_DELIVERY && !isSoldOut && (
+        {/* Só mostra "frete grátis" quando o produto SOZINHO já atinge o valor
+            mínimo — senão seria propaganda enganosa num item de R$ 5 */}
+        {!isSoldOut && effectivePrice >= FREE_DELIVERY_MIN_ORDER && (
           <span className="inline-flex items-center gap-1 text-xs font-display font-bold text-green-700 -mt-1">
             <Truck size={12} strokeWidth={2.5} /> Frete grátis
           </span>

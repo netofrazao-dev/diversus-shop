@@ -2,7 +2,13 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { X, Minus, Plus, Trash2, ShoppingBag, Truck, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCartStore } from '../../store/cartStore';
-import { PLACEHOLDER_IMAGE, DELIVERY_FEE, DELIVERY_TIME_NOTE, IS_FREE_DELIVERY } from '../../lib/constants';
+import {
+  PLACEHOLDER_IMAGE,
+  DELIVERY_TIME_NOTE,
+  FREE_DELIVERY_MIN_ORDER,
+  getDeliveryFee,
+  amountMissingForFreeDelivery,
+} from '../../lib/constants';
 import Button from '../ui/Button';
 
 const formatPrice = (value) =>
@@ -22,7 +28,10 @@ export default function CartDrawer() {
     getComboDiscount,
   } = useCartStore();
 
-  const total = getTotalPrice() + DELIVERY_FEE;
+  const goodsTotal = getTotalPrice(); // produtos já com desconto de combo
+  const deliveryFee = getDeliveryFee(goodsTotal);
+  const missingForFreeDelivery = amountMissingForFreeDelivery(goodsTotal);
+  const total = goodsTotal + deliveryFee;
   const subtotal = getSubtotal();
   const comboDiscount = getComboDiscount();
 
@@ -168,12 +177,23 @@ export default function CartDrawer() {
                 )}
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-black/60">Entrega</span>
-                  {IS_FREE_DELIVERY ? (
+                  {deliveryFee === 0 ? (
                     <span className="font-display font-bold text-green-700">GRÁTIS 🎉</span>
                   ) : (
-                    <span className="text-black/60">{formatPrice(DELIVERY_FEE)}</span>
+                    <span className="text-black/60">{formatPrice(deliveryFee)}</span>
                   )}
                 </div>
+
+                {/* Falta pouco pro frete grátis — empurrãozinho pra aumentar o pedido */}
+                {missingForFreeDelivery > 0 && (
+                  <div className="bg-white border-2 border-black rounded-xl px-3 py-2 flex items-center gap-2">
+                    <Truck size={15} strokeWidth={2.5} className="shrink-0" />
+                    <p className="text-xs font-display font-semibold leading-tight">
+                      Falta <span className="text-primary">{formatPrice(missingForFreeDelivery)}</span>{' '}
+                      pra sua entrega sair de graça!
+                    </p>
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
                   <span className="font-display font-semibold text-lg">Total</span>
                   <span className="font-display font-bold text-2xl text-primary">

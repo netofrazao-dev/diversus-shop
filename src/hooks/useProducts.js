@@ -259,21 +259,5 @@ export function useProductRatings() {
   });
 }
 
-/**
- * getEffectivePrice — calcula o preço "de fato" de um produto,
- * considerando promoção ativa (se dentro da janela de validade).
- */
-export function getEffectivePrice(product) {
-  const now = new Date();
-  const hasPromo =
-    product.promo_price != null &&
-    product.promo_price < product.price &&
-    (!product.promo_starts_at || new Date(product.promo_starts_at) <= now) &&
-    (!product.promo_ends_at || new Date(product.promo_ends_at) >= now);
-
-  return {
-    isPromo: hasPromo,
-    price: hasPromo ? product.promo_price : product.price,
-    originalPrice: product.price,
-  };
-}
+// Regras de preço (promoção + desconto da loja toda) ficam em lib/pricing.js
+export { getEffectivePrice } from '../lib/pricing';

@@ -126,3 +126,13 @@ describe('cartStore — clearCart', () => {
     expect(useCartStore.getState().combos).toHaveLength(0);
   });
 });
+
+describe('cartStore — desconto da loja toda', () => {
+  it('item adicionado entra no carrinho já com o desconto geral', async () => {
+    const { setGlobalDiscount } = await import('../../lib/pricing');
+    setGlobalDiscount({ percent: 10, endsAt: null });
+    useCartStore.getState().addItem(productA);
+    expect(useCartStore.getState().items[0].price).toBe(45);
+    setGlobalDiscount({ percent: 0, endsAt: null });
+  });
+});

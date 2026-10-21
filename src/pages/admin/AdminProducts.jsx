@@ -10,6 +10,7 @@ import { compressImage } from '../../lib/imageCompression';
 import { logActivity } from '../../lib/activityLog';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
+import StoreDiscountPanel from '../../components/admin/StoreDiscountPanel';
 import CollapsibleSection from '../../components/ui/CollapsibleSection';
 
 const emptyForm = {
@@ -423,9 +424,12 @@ export default function AdminProducts() {
             {products.length} produto(s) cadastrado(s)
           </p>
         </div>
-        <Button variant="primary" icon={Plus} onClick={openNewForm}>
-          Novo produto
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <StoreDiscountPanel onMessage={setToast} />
+          <Button variant="primary" icon={Plus} onClick={openNewForm}>
+            Novo produto
+          </Button>
+        </div>
       </div>
 
       {/* Aviso de sucesso/erro */}

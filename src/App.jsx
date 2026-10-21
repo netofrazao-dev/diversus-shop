@@ -10,6 +10,7 @@ import MetaPixelTracker from './components/layout/MetaPixelTracker';
 import ErrorBoundary from './components/layout/ErrorBoundary';
 import AppRoutes from './routes/AppRoutes';
 import { useCouponCapture } from './hooks/useCouponCapture';
+import { useStoreDiscount } from './hooks/useStoreDiscount';
 
 const queryClient = new QueryClient();
 
@@ -17,6 +18,7 @@ function Layout() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
   useCouponCapture();
+  useStoreDiscount();
 
   return (
     <div className="min-h-screen flex flex-col bg-white font-body">

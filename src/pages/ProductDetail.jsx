@@ -10,6 +10,7 @@ import {
   getEffectivePrice,
 } from '../hooks/useProducts';
 import { useCartStore } from '../store/cartStore';
+import { useGlobalDiscount } from '../lib/pricing';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import RestockRequestModal from '../components/product/RestockRequestModal';
@@ -33,6 +34,7 @@ export default function ProductDetail() {
   const { data: combos } = useProductCombos(id);
 
   const addItem = useCartStore((state) => state.addItem);
+  useGlobalDiscount(); // re-renderiza quando o desconto da loja muda
   const addCombo = useCartStore((state) => state.addCombo);
 
   const [quantity, setQuantity] = useState(1);

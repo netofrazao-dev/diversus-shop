@@ -5,12 +5,34 @@
  */
 export const PLACEHOLDER_IMAGE = `${import.meta.env.BASE_URL}placeholder-product.png`;
 
-/** Taxa de entrega fixa, somada ao total no carrinho e no checkout. */
-/** Taxa de entrega. Padrão agora é 0 (frete grátis). Pode ser reativada via VITE_DELIVERY_FEE. */
-export const DELIVERY_FEE = Number(import.meta.env.VITE_DELIVERY_FEE ?? 0);
+/**
+ * Regra de entrega da loja:
+ *  - Compras a partir de FREE_DELIVERY_MIN_ORDER → entrega GRÁTIS
+ *  - Abaixo disso → cobra DELIVERY_FEE_BELOW_MIN
+ *
+ * Os dois valores podem ser mudados sem mexer no código, pelas variáveis
+ * de ambiente VITE_FREE_DELIVERY_MIN e VITE_DELIVERY_FEE.
+ */
+export const FREE_DELIVERY_MIN_ORDER = Number(import.meta.env.VITE_FREE_DELIVERY_MIN ?? 15);
+export const DELIVERY_FEE_BELOW_MIN = Number(import.meta.env.VITE_DELIVERY_FEE ?? 2);
 
-/** true quando a entrega é gratuita — usado pra destacar "Frete grátis" pela loja */
-export const IS_FREE_DELIVERY = DELIVERY_FEE === 0;
+/**
+ * getDeliveryFee — quanto custa a entrega pra um determinado valor de compra.
+ * O valor considerado é o total dos produtos já com desconto de combo
+ * (o mesmo nos dois lugares: carrinho e checkout), de propósito: assim o
+ * cupom nunca "tira" o frete grátis que o cliente já tinha visto no carrinho.
+ */
+export function getDeliveryFee(orderValue) {
+  return orderValue >= FREE_DELIVERY_MIN_ORDER ? 0 : DELIVERY_FEE_BELOW_MIN;
+}
+
+/** Quanto ainda falta pra ganhar frete grátis (0 se já ganhou) */
+export function amountMissingForFreeDelivery(orderValue) {
+  return Math.max(0, FREE_DELIVERY_MIN_ORDER - orderValue);
+}
+
+/** true quando a loja oferece frete grátis em alguma condição */
+export const HAS_FREE_DELIVERY_OFFER = DELIVERY_FEE_BELOW_MIN >= 0;
 
 /** Aviso sobre o horário das entregas, mostrado no carrinho e no checkout. */
 export const DELIVERY_TIME_NOTE = 'As entregas começam a partir das 15h30.';

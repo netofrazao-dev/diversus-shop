@@ -318,3 +318,46 @@ Rastreamento de e-commerce pra quem for anunciar no Instagram/Facebook. Eventos 
 4. Redeploy sem cache
 
 Se não preencher, nada é carregado — o site funciona normal, sem nenhum script do Meta. Pra conferir se está funcionando, instale a extensão **"Meta Pixel Helper"** no Chrome e navegue pelo site — ela mostra em tempo real quais eventos estão disparando.
+
+## 42. Keep-alive do Supabase (evita o banco pausar)
+
+No plano gratuito, o Supabase **pausa o projeto depois de 7 dias sem atividade** — e a loja sai do ar até alguém despausar na mão. Agora existem duas camadas automáticas pra isso nunca acontecer:
+
+1. **Vercel Cron** (`vercel.json` + `api/keepalive.js`): todo dia o Vercel chama `/api/keepalive`, que faz uma consulta mínima no banco. Não precisa configurar nada — reaproveita as variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` que já existem no Vercel.
+2. **GitHub Actions** (`.github/workflows/supabase-keepalive.yml`): a cada 3 dias o GitHub chama o mesmo endereço público. É uma segunda garantia, caso a primeira falhe. Também não precisa de senha nem secret nenhum.
+
+Pra testar na hora, basta abrir no navegador: `https://diversus-shop.vercel.app/api/keepalive` — deve responder `{"ok":true,...}`.
+
+⚠️ O GitHub desativa agendamentos quando o repositório fica 60 dias sem commit. Se passar muito tempo sem mexer no projeto, confira a aba **Actions** do repositório e reative se precisar (o Vercel Cron continua rodando normalmente nesse caso).
+
+## 43. Frete grátis a partir de um valor mínimo
+
+A entrega agora segue esta regra:
+
+- **Compras a partir de R$ 15** → entrega **GRÁTIS**
+- **Abaixo de R$ 15** → taxa de **R$ 2**
+
+Os dois valores são configuráveis sem mexer no código, pelas variáveis de ambiente:
+
+```
+VITE_FREE_DELIVERY_MIN=15   # valor mínimo pra frete grátis
+VITE_DELIVERY_FEE=2         # taxa cobrada abaixo do mínimo
+```
+
+Onde isso aparece pro cliente:
+- **Faixa do topo**: "Frete GRÁTIS em compras a partir de R$ 15,00!"
+- **Carrinho e checkout**: a linha "Entrega" mostra GRÁTIS ou o valor da taxa, e aparece um aviso **"Falta R$ X pra sua entrega sair de graça!"** quando ainda não atingiu o mínimo (isso costuma aumentar o valor médio do pedido)
+- **Card do produto**: o selo "Frete grátis" só aparece em produtos que sozinhos já custam R$ 15 ou mais — senão seria propaganda enganosa num item de R$ 5
+
+**Detalhe importante:** o valor considerado é o total dos produtos **antes do cupom**. Isso é de propósito — assim um cupom de desconto nunca tira o frete grátis que o cliente já tinha visto no carrinho.
+
+A regra está travada por testes automatizados (`src/lib/__tests__/constants.test.js`), inclusive o caso limite de exatamente R$ 15.
+
+## 44. Desconto na loja toda (botão no admin)
+
+Em **Admin → Produtos** há o botão **"Desconto na loja toda"**: digite o % (1 a 90) e, se quiser, a data final, e clique em *Ligar desconto*. Todos os preços do site passam a mostrar o desconto (preço riscado + "PROMOÇÃO") e o banner do topo anuncia "X% OFF na loja toda". Para desligar, abra o mesmo botão e clique em *Desligar desconto*.
+
+- Não soma com promoção do produto: vale sempre o **menor preço**.
+- Itens que o cliente já colocou no carrinho mantêm o preço de quando foram adicionados.
+- **Banco de dados:** rode `migration_store_discount.sql` uma vez no SQL Editor do Supabase (cria a tabela `store_settings`).
+- Regras de preço ficam em `src/lib/pricing.js` (testadas em `src/lib/__tests__/pricing.test.js`).

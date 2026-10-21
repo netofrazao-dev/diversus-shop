@@ -10,7 +10,11 @@ import { supabase } from '../lib/supabaseClient';
 import { isPixConfigured } from '../lib/pix';
 import { validateCoupon } from '../lib/coupons';
 import { getPendingCoupon, clearPendingCoupon } from '../hooks/useCouponCapture';
-import { DELIVERY_FEE, DELIVERY_TIME_NOTE, IS_FREE_DELIVERY } from '../lib/constants';
+import {
+  DELIVERY_TIME_NOTE,
+  getDeliveryFee,
+  amountMissingForFreeDelivery,
+} from '../lib/constants';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import { lazy, Suspense } from 'react';
@@ -58,7 +62,12 @@ export default function Checkout() {
   const comboDiscount = getComboDiscount();
   const afterCombo = getTotalPrice(); // subtotal já com desconto de combo aplicado
   const couponDiscount = couponApplied?.discount || 0;
-  const total = Math.max(0, afterCombo - couponDiscount) + DELIVERY_FEE;
+  // A entrega é grátis a partir do valor mínimo. Usamos afterCombo (produtos
+  // já com desconto de combo, ANTES do cupom) de propósito: assim um cupom
+  // nunca tira o frete grátis que o cliente já tinha visto no carrinho.
+  const deliveryFee = getDeliveryFee(afterCombo);
+  const missingForFreeDelivery = amountMissingForFreeDelivery(afterCombo);
+  const total = Math.max(0, afterCombo - couponDiscount) + deliveryFee;
 
   const handleChange = (field) => (e) => {
     setForm((f) => ({ ...f, [field]: e.target.value }));
@@ -162,7 +171,7 @@ export default function Checkout() {
         customer: form,
         items,
         total,
-        deliveryFee: DELIVERY_FEE,
+        deliveryFee,
         coupon: couponApplied,
       });
 
@@ -178,13 +187,13 @@ export default function Checkout() {
           shortId: orderId.slice(0, 8),
           openWhatsApp: () =>
             openWhatsAppOrder(STORE_WHATSAPP, form, items, total, {
-              deliveryFee: DELIVERY_FEE,
+              deliveryFee,
               coupon: couponApplied,
             }),
         });
       } else {
         openWhatsAppOrder(STORE_WHATSAPP, form, items, total, {
-          deliveryFee: DELIVERY_FEE,
+          deliveryFee,
           coupon: couponApplied,
         });
         navigate('/', { state: { orderSuccess: true } });
@@ -408,12 +417,19 @@ export default function Checkout() {
             )}
             <div className="flex justify-between text-sm">
               <span className="text-black/60">Entrega</span>
-              {IS_FREE_DELIVERY ? (
+              {deliveryFee === 0 ? (
                 <span className="font-display font-bold text-green-700">GRÁTIS 🎉</span>
               ) : (
-                <span className="text-black/60">{formatPrice(DELIVERY_FEE)}</span>
+                <span className="text-black/60">{formatPrice(deliveryFee)}</span>
               )}
             </div>
+
+            {missingForFreeDelivery > 0 && (
+              <p className="flex items-center gap-1.5 text-xs font-display font-semibold text-black/70 bg-white border-2 border-black rounded-xl px-3 py-2">
+                <Truck size={14} strokeWidth={2.5} className="shrink-0" />
+                Adicione mais {formatPrice(missingForFreeDelivery)} ao pedido e a entrega sai de graça!
+              </p>
+            )}
             <div className="flex justify-between items-center">
               <span className="font-display font-semibold">Total</span>
               <span className="font-display font-bold text-2xl text-primary">

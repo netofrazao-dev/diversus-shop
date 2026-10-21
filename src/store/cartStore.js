@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { getEffectivePrice } from '../lib/pricing';
 
 /**
  * cartStore — Estado global do carrinho (Zustand + persist no localStorage)
@@ -27,7 +28,7 @@ export const useCartStore = create(
       addItem: (product, quantity = 1, variant = null) => {
         const items = get().items;
         const lineId = variant ? `${product.id}::${variant.signature}` : product.id;
-        const unitPrice = (product.promo_price ?? product.price) + (variant?.priceAdjustment || 0);
+        const unitPrice = getEffectivePrice(product).price + (variant?.priceAdjustment || 0);
 
         const existing = items.find((item) => item.id === lineId);
 

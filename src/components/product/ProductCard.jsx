@@ -8,7 +8,7 @@ import RestockRequestModal from './RestockRequestModal';
 import StarRating from './StarRating';
 import { getEffectivePrice, useGlobalDiscount } from '../../lib/pricing';
 import { trackAddToCart } from '../../lib/metaPixel';
-import { PLACEHOLDER_IMAGE, FREE_DELIVERY_MIN_ORDER } from '../../lib/constants';
+import { PLACEHOLDER_IMAGE } from '../../lib/constants';
 
 /**
  * ProductCard — Card de produto do DIVERSUS SHOP
@@ -105,9 +105,8 @@ export default function ProductCard({ product, onAddToCart, rating }) {
           </span>
         </div>
 
-        {/* Só mostra "frete grátis" quando o produto SOZINHO já atinge o valor
-            mínimo — senão seria propaganda enganosa num item de R$ 5 */}
-        {!isSoldOut && effectivePrice >= FREE_DELIVERY_MIN_ORDER && (
+        {/* A entrega é sempre grátis (o pedido mínimo é cobrado no carrinho) */}
+        {!isSoldOut && (
           <span className="inline-flex items-center gap-1 text-xs font-display font-bold text-green-700 -mt-1">
             <Truck size={12} strokeWidth={2.5} /> Frete grátis
           </span>

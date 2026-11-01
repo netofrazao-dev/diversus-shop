@@ -5,9 +5,8 @@ import { useCartStore } from '../../store/cartStore';
 import {
   PLACEHOLDER_IMAGE,
   DELIVERY_TIME_NOTE,
-  FREE_DELIVERY_MIN_ORDER,
-  getDeliveryFee,
-  amountMissingForFreeDelivery,
+  MIN_ORDER_VALUE,
+  amountMissingForMinOrder,
 } from '../../lib/constants';
 import Button from '../ui/Button';
 
@@ -28,10 +27,8 @@ export default function CartDrawer() {
     getComboDiscount,
   } = useCartStore();
 
-  const goodsTotal = getTotalPrice(); // produtos já com desconto de combo
-  const deliveryFee = getDeliveryFee(goodsTotal);
-  const missingForFreeDelivery = amountMissingForFreeDelivery(goodsTotal);
-  const total = goodsTotal + deliveryFee;
+  const total = getTotalPrice(); // produtos já com desconto de combo (entrega é sempre grátis)
+  const missingForMinOrder = amountMissingForMinOrder(total);
   const subtotal = getSubtotal();
   const comboDiscount = getComboDiscount();
 
@@ -177,20 +174,17 @@ export default function CartDrawer() {
                 )}
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-black/60">Entrega</span>
-                  {deliveryFee === 0 ? (
-                    <span className="font-display font-bold text-green-700">GRÁTIS 🎉</span>
-                  ) : (
-                    <span className="text-black/60">{formatPrice(deliveryFee)}</span>
-                  )}
+                  <span className="font-display font-bold text-green-700">GRÁTIS 🎉</span>
                 </div>
 
-                {/* Falta pouco pro frete grátis — empurrãozinho pra aumentar o pedido */}
-                {missingForFreeDelivery > 0 && (
+                {/* Abaixo do pedido mínimo — diz quanto falta pra poder finalizar */}
+                {missingForMinOrder > 0 && (
                   <div className="bg-white border-2 border-black rounded-xl px-3 py-2 flex items-center gap-2">
                     <Truck size={15} strokeWidth={2.5} className="shrink-0" />
                     <p className="text-xs font-display font-semibold leading-tight">
-                      Falta <span className="text-primary">{formatPrice(missingForFreeDelivery)}</span>{' '}
-                      pra sua entrega sair de graça!
+                      Pedido mínimo de {formatPrice(MIN_ORDER_VALUE)}. Faltam{' '}
+                      <span className="text-primary">{formatPrice(missingForMinOrder)}</span>{' '}
+                      pra finalizar com entrega grátis!
                     </p>
                   </div>
                 )}
@@ -208,8 +202,11 @@ export default function CartDrawer() {
                   size="lg"
                   isFullWidth
                   onClick={handleCheckout}
+                  disabled={missingForMinOrder > 0}
                 >
-                  Finalizar pedido
+                  {missingForMinOrder > 0
+                    ? `Mínimo de ${formatPrice(MIN_ORDER_VALUE)}`
+                    : 'Finalizar pedido'}
                 </Button>
                 <p className="flex items-center justify-center gap-1.5 text-xs text-black/40">
                   <ShieldCheck size={13} /> Seus dados estão protegidos

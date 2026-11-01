@@ -6,33 +6,33 @@
 export const PLACEHOLDER_IMAGE = `${import.meta.env.BASE_URL}placeholder-product.png`;
 
 /**
- * Regra de entrega da loja:
- *  - Compras a partir de FREE_DELIVERY_MIN_ORDER → entrega GRÁTIS
- *  - Abaixo disso → cobra DELIVERY_FEE_BELOW_MIN
+ * Regra de pedido da loja:
+ *  - Pedido mínimo de MIN_ORDER_VALUE → abaixo disso não dá pra finalizar
+ *  - A entrega é SEMPRE GRÁTIS (não existe mais taxa de entrega)
  *
- * Os dois valores podem ser mudados sem mexer no código, pelas variáveis
- * de ambiente VITE_FREE_DELIVERY_MIN e VITE_DELIVERY_FEE.
- */
-export const FREE_DELIVERY_MIN_ORDER = Number(import.meta.env.VITE_FREE_DELIVERY_MIN ?? 15);
-export const DELIVERY_FEE_BELOW_MIN = Number(import.meta.env.VITE_DELIVERY_FEE ?? 2);
-
-/**
- * getDeliveryFee — quanto custa a entrega pra um determinado valor de compra.
+ * O mínimo pode ser mudado sem mexer no código, pela variável de ambiente
+ * VITE_MIN_ORDER.
+ *
  * O valor considerado é o total dos produtos já com desconto de combo
- * (o mesmo nos dois lugares: carrinho e checkout), de propósito: assim o
- * cupom nunca "tira" o frete grátis que o cliente já tinha visto no carrinho.
+ * (o mesmo nos dois lugares: carrinho e checkout), ANTES do cupom, de
+ * propósito: assim o cupom nunca "trava" um pedido que o cliente já tinha
+ * visto liberado no carrinho.
  */
-export function getDeliveryFee(orderValue) {
-  return orderValue >= FREE_DELIVERY_MIN_ORDER ? 0 : DELIVERY_FEE_BELOW_MIN;
+export const MIN_ORDER_VALUE = Number(import.meta.env.VITE_MIN_ORDER ?? 25);
+
+// Compara em centavos pra soma de preços quebrados (ex: 8,30 x 3) não
+// ficar 1 centavo "abaixo" do mínimo por erro de arredondamento.
+const toCents = (value) => Math.round(value * 100);
+
+/** true quando o pedido já atingiu o valor mínimo */
+export function reachesMinOrder(orderValue) {
+  return toCents(orderValue) >= toCents(MIN_ORDER_VALUE);
 }
 
-/** Quanto ainda falta pra ganhar frete grátis (0 se já ganhou) */
-export function amountMissingForFreeDelivery(orderValue) {
-  return Math.max(0, FREE_DELIVERY_MIN_ORDER - orderValue);
+/** Quanto ainda falta pra atingir o pedido mínimo (0 se já atingiu) */
+export function amountMissingForMinOrder(orderValue) {
+  return Math.max(0, toCents(MIN_ORDER_VALUE) - toCents(orderValue)) / 100;
 }
-
-/** true quando a loja oferece frete grátis em alguma condição */
-export const HAS_FREE_DELIVERY_OFFER = DELIVERY_FEE_BELOW_MIN >= 0;
 
 /** Aviso sobre o horário das entregas, mostrado no carrinho e no checkout. */
 export const DELIVERY_TIME_NOTE = 'As entregas começam a partir das 15h30.';

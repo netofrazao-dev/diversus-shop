@@ -1,48 +1,52 @@
 import { describe, it, expect } from 'vitest';
 import {
-  getDeliveryFee,
-  amountMissingForFreeDelivery,
-  FREE_DELIVERY_MIN_ORDER,
-  DELIVERY_FEE_BELOW_MIN,
+  reachesMinOrder,
+  amountMissingForMinOrder,
+  MIN_ORDER_VALUE,
 } from '../constants';
 
 /**
- * Regra de entrega — isso é dinheiro, então fica travado por teste.
- * Padrão: compras a partir de R$ 15 têm entrega grátis; abaixo, R$ 2.
+ * Regra do pedido mínimo — isso é dinheiro, então fica travado por teste.
+ * Padrão: pedido mínimo de R$ 25, com entrega sempre grátis.
  */
 
-describe('getDeliveryFee', () => {
-  it('cobra a taxa quando a compra está abaixo do mínimo', () => {
-    expect(getDeliveryFee(0)).toBe(DELIVERY_FEE_BELOW_MIN);
-    expect(getDeliveryFee(5)).toBe(DELIVERY_FEE_BELOW_MIN);
-    expect(getDeliveryFee(FREE_DELIVERY_MIN_ORDER - 0.01)).toBe(DELIVERY_FEE_BELOW_MIN);
+describe('reachesMinOrder', () => {
+  it('bloqueia pedido abaixo do mínimo', () => {
+    expect(reachesMinOrder(0)).toBe(false);
+    expect(reachesMinOrder(5)).toBe(false);
+    expect(reachesMinOrder(MIN_ORDER_VALUE - 0.01)).toBe(false);
   });
 
-  it('entrega de graça exatamente no valor mínimo', () => {
-    expect(getDeliveryFee(FREE_DELIVERY_MIN_ORDER)).toBe(0);
+  it('libera pedido exatamente no valor mínimo', () => {
+    expect(reachesMinOrder(MIN_ORDER_VALUE)).toBe(true);
   });
 
-  it('entrega de graça acima do valor mínimo', () => {
-    expect(getDeliveryFee(FREE_DELIVERY_MIN_ORDER + 0.01)).toBe(0);
-    expect(getDeliveryFee(FREE_DELIVERY_MIN_ORDER * 3)).toBe(0);
+  it('libera pedido acima do valor mínimo', () => {
+    expect(reachesMinOrder(MIN_ORDER_VALUE + 0.01)).toBe(true);
+    expect(reachesMinOrder(MIN_ORDER_VALUE * 3)).toBe(true);
+  });
+
+  it('não trava por erro de arredondamento na soma dos preços', () => {
+    // 0.1 + 0.2 = 0.30000000000000004 no JavaScript
+    expect(reachesMinOrder(MIN_ORDER_VALUE - 0.3 + 0.1 + 0.2)).toBe(true);
   });
 });
 
-describe('amountMissingForFreeDelivery', () => {
-  it('diz quanto falta pra ganhar o frete grátis', () => {
-    expect(amountMissingForFreeDelivery(0)).toBe(FREE_DELIVERY_MIN_ORDER);
-    expect(amountMissingForFreeDelivery(10)).toBeCloseTo(FREE_DELIVERY_MIN_ORDER - 10, 2);
+describe('amountMissingForMinOrder', () => {
+  it('diz quanto falta pra atingir o pedido mínimo', () => {
+    expect(amountMissingForMinOrder(0)).toBe(MIN_ORDER_VALUE);
+    expect(amountMissingForMinOrder(10)).toBe(MIN_ORDER_VALUE - 10);
+    expect(amountMissingForMinOrder(MIN_ORDER_VALUE - 0.1)).toBe(0.1);
   });
 
-  it('não mostra valor negativo quando já ganhou o frete grátis', () => {
-    expect(amountMissingForFreeDelivery(FREE_DELIVERY_MIN_ORDER)).toBe(0);
-    expect(amountMissingForFreeDelivery(FREE_DELIVERY_MIN_ORDER + 50)).toBe(0);
+  it('não mostra valor negativo quando já atingiu o mínimo', () => {
+    expect(amountMissingForMinOrder(MIN_ORDER_VALUE)).toBe(0);
+    expect(amountMissingForMinOrder(MIN_ORDER_VALUE + 50)).toBe(0);
   });
 });
 
 describe('configuração padrão da loja', () => {
-  it('usa R$ 15 de mínimo e R$ 2 de taxa quando nada é configurado', () => {
-    expect(FREE_DELIVERY_MIN_ORDER).toBe(15);
-    expect(DELIVERY_FEE_BELOW_MIN).toBe(2);
+  it('usa R$ 25 de pedido mínimo quando nada é configurado', () => {
+    expect(MIN_ORDER_VALUE).toBe(25);
   });
 });

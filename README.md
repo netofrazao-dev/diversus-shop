@@ -330,7 +330,7 @@ Pra testar na hora, basta abrir no navegador: `https://diversus-shop.vercel.app/
 
 ⚠️ O GitHub desativa agendamentos quando o repositório fica 60 dias sem commit. Se passar muito tempo sem mexer no projeto, confira a aba **Actions** do repositório e reative se precisar (o Vercel Cron continua rodando normalmente nesse caso).
 
-## 43. Frete grátis a partir de um valor mínimo
+## 43. Frete grátis a partir de um valor mínimo (substituída pela seção 45)
 
 A entrega agora segue esta regra:
 
@@ -361,3 +361,28 @@ Em **Admin → Produtos** há o botão **"Desconto na loja toda"**: digite o % (
 - Itens que o cliente já colocou no carrinho mantêm o preço de quando foram adicionados.
 - **Banco de dados:** rode `migration_store_discount.sql` uma vez no SQL Editor do Supabase (cria a tabela `store_settings`).
 - Regras de preço ficam em `src/lib/pricing.js` (testadas em `src/lib/__tests__/pricing.test.js`).
+
+## 45. Pedido mínimo de R$ 25 e entrega sempre grátis
+
+Substitui a regra da seção 43. Agora:
+
+- **Pedido mínimo de R$ 25** → abaixo disso o botão de finalizar fica travado (no carrinho e no checkout)
+- **Entrega sempre GRÁTIS** → não existe mais taxa de entrega
+
+O mínimo é configurável sem mexer no código, pela variável de ambiente:
+
+```
+VITE_MIN_ORDER=25   # valor mínimo do pedido
+```
+
+As variáveis antigas `VITE_FREE_DELIVERY_MIN` e `VITE_DELIVERY_FEE` não são mais lidas — se ainda estiverem na Vercel, podem ser apagadas.
+
+Onde isso aparece pro cliente:
+- **Faixa do topo**: "Entrega GRÁTIS! 🎉 Pedido mínimo de R$ 25,00"
+- **Carrinho e checkout**: a linha "Entrega" mostra sempre GRÁTIS; abaixo do mínimo aparece o aviso **"Pedido mínimo de R$ 25,00. Faltam R$ X pra finalizar com entrega grátis!"** e o botão mostra o valor mínimo em vez de deixar finalizar
+- **Card do produto**: o selo "Frete grátis" aparece em todos os produtos disponíveis
+- **WhatsApp**: a mensagem do pedido sempre traz "Frete: GRÁTIS"
+
+**Detalhe importante:** o valor considerado é o total dos produtos **antes do cupom** (já com desconto de combo). Assim um cupom nunca trava um pedido que o cliente já tinha visto liberado no carrinho.
+
+A regra está travada por testes automatizados (`src/lib/__tests__/constants.test.js`), inclusive o caso limite de exatamente R$ 25.

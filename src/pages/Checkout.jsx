@@ -12,8 +12,8 @@ import { validateCoupon } from '../lib/coupons';
 import { getPendingCoupon, clearPendingCoupon } from '../hooks/useCouponCapture';
 import {
   DELIVERY_TIME_NOTE,
-  getDeliveryFee,
-  amountMissingForFreeDelivery,
+  MIN_ORDER_VALUE,
+  amountMissingForMinOrder,
 } from '../lib/constants';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
@@ -62,12 +62,11 @@ export default function Checkout() {
   const comboDiscount = getComboDiscount();
   const afterCombo = getTotalPrice(); // subtotal já com desconto de combo aplicado
   const couponDiscount = couponApplied?.discount || 0;
-  // A entrega é grátis a partir do valor mínimo. Usamos afterCombo (produtos
-  // já com desconto de combo, ANTES do cupom) de propósito: assim um cupom
-  // nunca tira o frete grátis que o cliente já tinha visto no carrinho.
-  const deliveryFee = getDeliveryFee(afterCombo);
-  const missingForFreeDelivery = amountMissingForFreeDelivery(afterCombo);
-  const total = Math.max(0, afterCombo - couponDiscount) + deliveryFee;
+  // Pedido mínimo: usamos afterCombo (produtos já com desconto de combo,
+  // ANTES do cupom) de propósito: assim um cupom nunca trava um pedido que o
+  // cliente já tinha visto liberado no carrinho. A entrega é sempre grátis.
+  const missingForMinOrder = amountMissingForMinOrder(afterCombo);
+  const total = Math.max(0, afterCombo - couponDiscount);
 
   const handleChange = (field) => (e) => {
     setForm((f) => ({ ...f, [field]: e.target.value }));
@@ -129,6 +128,7 @@ export default function Checkout() {
     e.preventDefault();
     if (honeypot) return; // preenchido = bot, aborta silenciosamente
     if (items.length === 0) return;
+    if (missingForMinOrder > 0) return;
     if (!validate()) return;
 
     setSubmitting(true);
@@ -171,7 +171,6 @@ export default function Checkout() {
         customer: form,
         items,
         total,
-        deliveryFee,
         coupon: couponApplied,
       });
 
@@ -187,13 +186,11 @@ export default function Checkout() {
           shortId: orderId.slice(0, 8),
           openWhatsApp: () =>
             openWhatsAppOrder(STORE_WHATSAPP, form, items, total, {
-              deliveryFee,
               coupon: couponApplied,
             }),
         });
       } else {
         openWhatsAppOrder(STORE_WHATSAPP, form, items, total, {
-          deliveryFee,
           coupon: couponApplied,
         });
         navigate('/', { state: { orderSuccess: true } });
@@ -417,17 +414,14 @@ export default function Checkout() {
             )}
             <div className="flex justify-between text-sm">
               <span className="text-black/60">Entrega</span>
-              {deliveryFee === 0 ? (
-                <span className="font-display font-bold text-green-700">GRÁTIS 🎉</span>
-              ) : (
-                <span className="text-black/60">{formatPrice(deliveryFee)}</span>
-              )}
+              <span className="font-display font-bold text-green-700">GRÁTIS 🎉</span>
             </div>
 
-            {missingForFreeDelivery > 0 && (
+            {missingForMinOrder > 0 && (
               <p className="flex items-center gap-1.5 text-xs font-display font-semibold text-black/70 bg-white border-2 border-black rounded-xl px-3 py-2">
                 <Truck size={14} strokeWidth={2.5} className="shrink-0" />
-                Adicione mais {formatPrice(missingForFreeDelivery)} ao pedido e a entrega sai de graça!
+                Pedido mínimo de {formatPrice(MIN_ORDER_VALUE)}. Adicione mais{' '}
+                {formatPrice(missingForMinOrder)} pra finalizar com entrega grátis!
               </p>
             )}
             <div className="flex justify-between items-center">
@@ -472,8 +466,11 @@ export default function Checkout() {
             isFullWidth
             isLoading={submitting}
             icon={CheckCircle2}
+            disabled={missingForMinOrder > 0}
           >
-            Confirmar e enviar no WhatsApp
+            {missingForMinOrder > 0
+              ? `Pedido mínimo de ${formatPrice(MIN_ORDER_VALUE)}`
+              : 'Confirmar e enviar no WhatsApp'}
           </Button>
 
           <p className="flex items-center justify-center gap-1.5 text-xs text-black/50 -mt-1">
